@@ -1,1 +1,0 @@
-The I2C Master library is an alternative library to Arduino's Wire library.  

@@ -1,5 +1,4 @@
 
-//MASTER - ARDUINO MEGA//-
 
 #include <Arduino.h>
 #define DEBUG //ainda não utilizado
@@ -29,8 +28,7 @@
   uint32_t timer;
   uint8_t i2cData[14];                    // Buffer for I2C data
   uint8_t dataI2c;
-  int AD0 = 4;                            // Ajuste de endereço do MPU 0x69=HIGH / 0X68=LOW
-
+  
 //----------------------------Timerlord settings-------------------------------------//
   #include <Time.h>
   float const LONGITUDE = -43.2311486;
@@ -38,21 +36,27 @@
   int const TIMEZONE = -3;
   SunLight Sun_Time;
 
-//----------------------------Data log---------------------------------------//
-  
-  #include <SPI.h>
-  #include <SD.h>
-      
-  //const int chipSelect = 4;
 
 //----------------------------I2c Comunication---------------------------------------//
-//#include <I2Cyangui.h>
-//comunication com;
-  #include <I2C.h>
-  int ArduinoSlave = 44; //i2c scan endereço do Arduino Slave
+  #include <I2Cyangui.h>
+  comunication com;
 
-//----------------------------Watchdog---------------------------------------//
-//#include <avr/wdt.h>
+//----------------------------Driver Settings---------------------------------------//
+
+  #include <Motor_Comands.h>
+  #define LPWM 6    //lpwm
+  #define RPWM 5    //rpwm
+  #define ENABLE 9  //pwm enable
+  
+  Driver_Setup Motor;
+
+//----------------------------PID Settings----------------------------//
+
+  #include <PID.h>
+  int Setpoint, Input, Output;         //Define Variables we'll be connecting to
+  PID_Control PID_Calculator;             //PID object
+  int Erro;
+
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
@@ -61,47 +65,38 @@ void setup()
   //----------------------------I2C settings----------------------------------//
   
   Serial.begin(9600);
-  I2c.begin();
+  Wire.begin();
+ 
 
-   // MPU Alternative Address //
-  pinMode(AD0,OUTPUT);
+  //----------------------------Driver Configurations----------------------------//
+  pinMode(LPWM, OUTPUT);
+  pinMode(RPWM, OUTPUT);
+  pinMode(ENABLE, OUTPUT);
 
-  // MPU Alternative Address //
-  //pinMode(AD0,OUTPUT);
-  //digitalWrite(AD0,HIGH);
-
-  //---------------------------------------------------------------------------//
-  //Serial.begin(9600);
-  //Wire.begin();
-  
 
   //---------------------------------RTC settings-----------------------------//
   rtc.begin();                           //Inicialização do RTC DS3231
   rtc.setDateTime(__DATE__, __TIME__);   //Configurando valores iniciais do RTC DS3231
 
-  //---------------------------------------------------------------------------//
-    #if ARDUINO >= 157
-  Wire.setClock(10000UL); // Set I2C frequency to 10kHz
+
+  #if ARDUINO >= 157
+  Wire.setClock(400000UL); // Set I2C frequency to 400kHz
   #else
-  TWBR = ((F_CPU / 10000UL) - 16) / 2; // Set I2C frequency to 10kHz
+  TWBR = ((F_CPU / 400000UL) - 16) / 2; // Set I2C frequency to 400kHz
   #endif
 
-//  #if ARDUINO >= 157
-//  Wire.setClock(400000UL); // Set I2C frequency to 400kHz
-//  #else
-//  TWBR = ((F_CPU / 400000UL) - 16) / 2; // Set I2C frequency to 400kHz
-//  #endif
+  //frequency between 10kHz-400kHz
 
 
   i2cData[0] = 7;                                   // Set the sample rate to 1000Hz - 8kHz/(7+1) = 1000Hz
   i2cData[1] = 0x00;                                // Disable FSYNC and set 260 Hz Acc filtering, 256 Hz Gyro filtering, 8 KHz sampling
   i2cData[2] = 0x00;                                // Set Gyro Full Scale Range to ±250deg/s
   i2cData[3] = 0x00;                                // Set Accelerometer Full Scale Range to ±2g
-  while (I2c.write(0x19, i2cData, 4, false));        // Write to all four registers at once
+  while (com.i2cWritey(0x19, i2cData, 4, false));        // Write to all four registers at once
   dataI2c = 0x01;      
-  while (I2c.write(0x6B, &dataI2c, 1, true));           // PLL with X axis gyroscope reference and disable sleep mode
+  while (com.i2cWritey(0x6B, &dataI2c, 1, true));           // PLL with X axis gyroscope reference and disable sleep mode
 
-  while (I2c.read(0x75, i2cData, 1));
+  while (com.i2cRead(0x75, i2cData, 1));
   if (i2cData[0] != 0x68) {                         // Read "WHO_AM_I" register //0x69 for AD0 High default of solar sensor project
     Serial.print(F("Error reading sensor"));
     while (1);
@@ -112,7 +107,7 @@ void setup()
   
   //---------------------------kalman----------------------------------//
   // Set kalman and gyro starting angle //
-  while (I2c.read(0x3B, i2cData, 6));
+  while (com.i2cRead(0x3B, i2cData, 6));
   accX = (int16_t)((i2cData[0] << 8) | i2cData[1]);
   accY = (int16_t)((i2cData[2] << 8) | i2cData[3]);
   accZ = (int16_t)((i2cData[4] << 8) | i2cData[5]);
@@ -135,26 +130,11 @@ void setup()
 
   timer = micros();
   //----------------------------------------------------------------------//
-  
-  //---------------------------------SD Card-------------------------------------//
-  
-  
-  while (!Serial) {// wait for serial port to connect. Needed for native USB port only
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
-    
-  if (!SD.begin(chipSelect)) {// see if the card is present and can be initialized 
-    Serial.println("Card failed, or not present");
-    return; // don't do anything more:
-  }
-  Serial.println("card initialized.");
-  
-  //----------------------------wATCHDOG---------------------------------------//
-
-  //wdt_enable(WDTO_1S);
+        
   
 }
 
+//------------------------------------------------------------------------//
 void CallRTC()                      //Pega a data e hora do RTC e imprime no monitor Serial
   {
     RTC_Data = rtc.getDateTime();     //Atribuindo valores instantâneos de data e hora à instância data e hora
@@ -171,10 +151,82 @@ void CallRTC()                      //Pega a data e hora do RTC e imprime no mon
     Serial.print(":");
     Serial.print(RTC_Data.second);    //Imprimindo o Segundo
     Serial.print ("  ");
-    //delay(1000);                    //Tempo pra atualização do valor enviado pela porta serial
+    delay(1000);                    //Tempo pra atualização do valor enviado pela porta serial
   }
-//::::::::::::::::::::::::::::::::::::LOOP:::::::::::::::::::::::::::::::::::::::://
 
+//------------------------------------------------------------------------//
+
+void Motor_Direction(int erro, int PWM, int input){
+  
+  int Threshold_Min = -2;
+  int Threshold_Max = 2;
+  int Max_Angle_Limit = 85;
+  int Min_Angle_Limit = -85;
+    
+  if (90 > input*-1 > -90 && erro < Threshold_Min) //Girar no sentido horário
+  { 
+    analogWrite(ENABLE, PWM); //0-255
+    digitalWrite(LPWM, LOW);
+    digitalWrite(RPWM, HIGH);
+    Serial.print("Input: ");Serial.print(input);Serial.print("\t");
+    Serial.print("Sentido: "); Serial.print("Hor"); Serial.print("\t");   
+    }
+    
+  else if ( -90 < input < 90 && erro > Threshold_Max) //Girar no sentido antihorário
+  {
+    analogWrite(ENABLE, PWM); //0-255
+    digitalWrite(LPWM, HIGH);
+    digitalWrite(RPWM, LOW);
+    Serial.print("Input: ");Serial.print(input);Serial.print("\t");
+    Serial.print("Sentido: ");Serial.print("AntiHor"); Serial.print("\t");
+      
+    }
+    
+   else if (Threshold_Min < erro < Threshold_Max)  //Não Girar
+  {
+    analogWrite(ENABLE, PWM); //0-255
+    digitalWrite(LPWM, LOW);
+    digitalWrite(RPWM, LOW);
+    Serial.print("Input: ");Serial.print(input);Serial.print("\t");
+    Serial.print("Sentido: ");Serial.print("Parado"); Serial.print("\t");   
+    }
+  
+  }
+//------------------------------------------------------------------------//
+
+int mapeamento(int x, int in_min, int in_max, int out_min, int out_max)
+{
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+//------------------------------------------------------------------------//
+
+void Erro_Read(int Setpoint,int Input) //Lê os bytes recebidos pela comunicação Master-Slave
+{
+       
+   
+  Setpoint = 0; //test angle, discomment to work properly
+  //constrain(Setpoint,-80,80);
+
+  Input = constrain(Input,-80,80);
+   
+  Erro = Setpoint - Input;  
+  Output = PID_Calculator.PID(Erro); 
+  
+  Output = mapeamento(Output,-216,216,110,230); //mudar valores para variáveis 
+  
+  Serial.print("Erro = ");Serial.print(Erro,DEC);Serial.print("\t");
+  Serial.print("Setpoint = ");Serial.print(int(Setpoint),DEC);Serial.print("\t");
+  Serial.print("Output = ");Serial.print(Output);
+  Serial.println("\t");  
+    
+  Motor_Direction(Erro,Output,Input);
+  
+  }
+//------------------------------------------------------------------------//
+
+
+//::::::::::::::::::::::::::::::::::::LOOP:::::::::::::::::::::::::::::::::::::::://
 void loop() {
 
   //----------------------------------------------------------------------//
@@ -183,41 +235,17 @@ void loop() {
   CallRTC();                                                   //Buscando Dados RTC
   //----------------------------------------------------------------------//
  
-  //-------------------------------SD_Card-------------------------------------//
-  
-  // Gravação de dados //
-  File dataFile = SD.open("Data_SD.txt", FILE_WRITE);
-
-  dataFile.print(String (RTC_Data.day));       
-  dataFile.print("-");
-  dataFile.print(String(RTC_Data.month));     
-  dataFile.print("-");
-  dataFile.print(String(RTC_Data.year));        
-  dataFile.print("  ");  
-  dataFile.print(String(RTC_Data.hour));      
-  dataFile.print(":");
-  dataFile.print(String(RTC_Data.minute));    
-  dataFile.print(":");
-  dataFile.print(String(RTC_Data.second));    
-  dataFile.print ("  ");
   
   //----------------------------------------------------------------------//
   // Calculating Sun parameters  //
    
   Sun_Time.Sun_Range (LONGITUDE, LATITUDE, TIMEZONE);
   double Sun_Setpoint = Sun_Time.Sun_Position (RTC_Data.second, RTC_Data.minute, RTC_Data.hour, RTC_Data.day, RTC_Data.month, RTC_Data.year);
-  Serial.print("Angulo Desejado: ");
-  Serial.print(Sun_Setpoint);
-  Serial.print("\t");
 
-  dataFile.print("Setpoint: ");
-  dataFile.print(Sun_Setpoint);
-  dataFile.print("\t");
-  
     
   //---------------------------------MPU_Read-------------------------------------//
   
-  while (I2c.read(0x3B, i2cData, 14)); // Update all the values //
+  while (com.i2cRead(0x3B, i2cData, 14)); // Update all the values //
   accX = (int16_t)((i2cData[0] << 8) | i2cData[1]);
   accY = (int16_t)((i2cData[2] << 8) | i2cData[3]);
   accZ = (int16_t)((i2cData[4] << 8) | i2cData[5]);
@@ -287,37 +315,15 @@ void loop() {
     gyroYangle = kalAngleY;
   
   
-  Serial.print("Roll_K: "); Serial.print(kalAngleX); Serial.print("\t");
-  Serial.print("\t");
-  
-  dataFile.print("Angle: "); dataFile.print(kalAngleX); dataFile.println("\t");
-  dataFile.close();
  
 //----------------------------------------------------------------------//
   
 
   delay(2);  //Verificar necessidade desse delay
 
-  int Angle_Erro = Sun_Setpoint - kalAngleX;  //Calculo do erro ((double) Setpoint - (double)variavel do sistema)
-  Serial.print("Erro = "); Serial.print(Angle_Erro);
   
-  //---------------------------Comunicação com Arduino Slave-------------------------------//
-  
-  
-  byte byte2 = int(Sun_Setpoint);        //Pegando os 8 primeiros bits
-  byte byte1 = int(Sun_Setpoint) >> 8;   //Pegando os próximos 8 bits
-  byte byte4 = int(kalAngleX);
-  byte byte3 = int(kalAngleX) >> 8;
-  
-  //I2c.begin(44); //endereço do arduino slave
-  I2c.write(ArduinoSlave, byte1);
-  I2c.write(ArduinoSlave, byte2);
-  I2c.write(ArduinoSlave, byte3);
-  I2c.write(ArduinoSlave, byte4);  
-  I2c.end();       //Termina a transmissão
+  Erro_Read(Sun_Setpoint,kalAngleX);
 
-
-  
   //-------------------------------------------------------------------------//
 
   Serial.println("");
@@ -325,8 +331,8 @@ void loop() {
 }
 
 
-  //-----------------------------------Watchdog reset----------------------------------//
-  
-  
-  
-  //--------------------------------------------------------------------------------//
+ 
+
+
+
+
