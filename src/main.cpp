@@ -1,7 +1,8 @@
-
+// analogWrite to digitalWrite em main.cpp e Motor_Comands.cpp (comentado com 0-255)
 
 #include <Arduino.h>
 #define DEBUG //ainda não utilizado
+
 
 //----------------------------RTC settings----------------------------------------//
   #include <DS3231.h>                     //Biblioteca para manipulação do DS3231
@@ -44,9 +45,9 @@
 //----------------------------Driver Settings---------------------------------------//
 
   #include <Motor_Comands.h>
-  #define LPWM 6    //lpwm
-  #define RPWM 5    //rpwm
-  #define ENABLE 9  //pwm enable
+  #define LPWM 4    //lpwm
+  #define RPWM 2    //rpwm
+  #define ENABLE 19  //pwm enable
   
   Driver_Setup Motor;
 
@@ -165,7 +166,7 @@ void Motor_Direction(int erro, int PWM, int input){
     
   if (90 > input*-1 > -90 && erro < Threshold_Min) //Girar no sentido horário
   { 
-    analogWrite(ENABLE, PWM); //0-255
+    digitalWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, LOW);
     digitalWrite(RPWM, HIGH);
     Serial.print("Input: ");Serial.print(input);Serial.print("\t");
@@ -174,7 +175,7 @@ void Motor_Direction(int erro, int PWM, int input){
     
   else if ( -90 < input < 90 && erro > Threshold_Max) //Girar no sentido antihorário
   {
-    analogWrite(ENABLE, PWM); //0-255
+    digitalWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, HIGH);
     digitalWrite(RPWM, LOW);
     Serial.print("Input: ");Serial.print(input);Serial.print("\t");
@@ -184,7 +185,7 @@ void Motor_Direction(int erro, int PWM, int input){
     
    else if (Threshold_Min < erro < Threshold_Max)  //Não Girar
   {
-    analogWrite(ENABLE, PWM); //0-255
+    digitalWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, LOW);
     digitalWrite(RPWM, LOW);
     Serial.print("Input: ");Serial.print(input);Serial.print("\t");
@@ -206,7 +207,7 @@ void Erro_Read(int Setpoint,int Input) //Lê os bytes recebidos pela comunicaç�
        
    
   Setpoint = 0; //test angle, discomment to work properly
-  //constrain(Setpoint,-80,80);
+  //Setpoint = constrain(Setpoint,-80,80);
 
   Input = constrain(Input,-80,80);
    
@@ -217,8 +218,7 @@ void Erro_Read(int Setpoint,int Input) //Lê os bytes recebidos pela comunicaç�
   
   Serial.print("Erro = ");Serial.print(Erro,DEC);Serial.print("\t");
   Serial.print("Setpoint = ");Serial.print(int(Setpoint),DEC);Serial.print("\t");
-  Serial.print("Output = ");Serial.print(Output);
-  Serial.println("\t");  
+  Serial.print("Output = ");Serial.print(Output); Serial.print("\t");
     
   Motor_Direction(Erro,Output,Input);
   
