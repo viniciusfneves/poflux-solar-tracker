@@ -59,6 +59,10 @@
   PID_Control PID_Calculator;             //PID object
   int Erro;
 
+//----------------------------Debug Settings----------------------------//
+  bool debug_angles;
+  bool debug_i2cread;
+
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
@@ -74,6 +78,10 @@ void setup()
   pinMode(LPWM, OUTPUT);
   pinMode(RPWM, OUTPUT);
   pinMode(ENABLE, OUTPUT);
+
+  //-----------------------What to Debug---------------------------------//
+  debug_angles = false;
+  debug_i2cread = true;
 
 
   //---------------------------------RTC settings-----------------------------//
@@ -98,7 +106,7 @@ void setup()
   dataI2c = 0x01;      
   while (com.i2cWritey(0x6B, &dataI2c, 1, true));           // PLL with X axis gyroscope reference and disable sleep mode
 
-  while (com.i2cRead(0x75, i2cData, 1));
+  while (com.i2cRead(0x75, i2cData, 1, debug_i2cread));
   if (i2cData[0] != 0x68) {                         // Read "WHO_AM_I" register //0x69 for AD0 High default of solar sensor project
     Serial.print(F("Error reading sensor"));
     while (1);
@@ -109,7 +117,7 @@ void setup()
   
   //---------------------------kalman----------------------------------//
   // Set kalman and gyro starting angle //
-  while (com.i2cRead(0x3B, i2cData, 6));
+  while (com.i2cRead(0x3B, i2cData, 6, debug_i2cread));
   accX = (int16_t)((i2cData[0] << 8) | i2cData[1]);
   accY = (int16_t)((i2cData[2] << 8) | i2cData[3]);
   accZ = (int16_t)((i2cData[4] << 8) | i2cData[5]);
@@ -130,12 +138,7 @@ void setup()
   compAngleX = roll;
   compAngleY = pitch;
 
-  timer = micros();
-
-
-  //-----------------------What to Debug---------------------------------//
-
-
+  timer = micros(); 
 
 
         
@@ -164,7 +167,8 @@ void CallRTC()                      //Pega a data e hora do RTC e imprime no mon
 
 //------------------------------------------------------------------------//
 
-void Motor_Direction(int erro, int PWM, int input){
+void Motor_Direction(int erro, int PWM, int input)
+{
   
   int Threshold_Min = -2;
   int Threshold_Max = 2;
@@ -176,30 +180,37 @@ void Motor_Direction(int erro, int PWM, int input){
     analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, LOW);
     digitalWrite(RPWM, HIGH);
+    if(debug_angles)
+    {
     Serial.print("Input: ");Serial.print(input);Serial.print("\t");
     Serial.print("Sentido: "); Serial.print("Hor"); Serial.print("\t");   
     }
-    
+  }
   else if ( -90 < input < 90 && erro > Threshold_Max) //Girar no sentido antihorário
   {
     analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, HIGH);
     digitalWrite(RPWM, LOW);
-    Serial.print("Input: ");Serial.print(input);Serial.print("\t");
-    Serial.print("Sentido: ");Serial.print("AntiHor"); Serial.print("\t");
-      
+    if(debug_angles)
+    {
+      Serial.print("Input: ");Serial.print(input);Serial.print("\t");
+      Serial.print("Sentido: ");Serial.print("AntiHor"); Serial.print("\t");
     }
-    
-   else if (Threshold_Min < erro < Threshold_Max)  //Não Girar
+      
+  }
+  else if (Threshold_Min < erro < Threshold_Max)  //Não Girar
   {
     analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, LOW);
     digitalWrite(RPWM, LOW);
-    Serial.print("Input: ");Serial.print(input);Serial.print("\t");
-    Serial.print("Sentido: ");Serial.print("Parado"); Serial.print("\t");   
+    if(debug_angles)
+    {
+      Serial.print("Input: ");Serial.print(input);Serial.print("\t");
+      Serial.print("Sentido: ");Serial.print("Parado"); Serial.print("\t");   
     }
   
   }
+}
 //------------------------------------------------------------------------//
 
 int mapeamento(int x, int in_min, int in_max, int out_min, int out_max)
@@ -213,7 +224,7 @@ void Erro_Read(int Setpoint,int Input) //Lê os bytes recebidos pela comunicaç�
 {
        
    
-  Setpoint = 0; //test angle, discomment to work properly
+  Setpoint = -60; //test angle, discomment to work properly
   //Setpoint = constrain(Setpoint,-80,80);
 
   Input = constrain(Input,-80,80);
@@ -222,14 +233,16 @@ void Erro_Read(int Setpoint,int Input) //Lê os bytes recebidos pela comunicaç�
   Output = PID_Calculator.PID(Erro); 
   
   Output = mapeamento(Output,-216,216,110,230); //mudar valores para variáveis 
-  
-  Serial.print("Erro = ");Serial.print(Erro,DEC);Serial.print("\t");
-  Serial.print("Setpoint = ");Serial.print(int(Setpoint),DEC);Serial.print("\t");
-  Serial.print("Output = ");Serial.print(Output); Serial.print("\t");
+  if(debug_angles)
+  {
+    Serial.print("Erro = ");Serial.print(Erro,DEC);Serial.print("\t");
+    Serial.print("Setpoint = ");Serial.print(int(Setpoint),DEC);Serial.print("\t");
+    Serial.print("Output = ");Serial.print(Output); Serial.print("\t");
+  }
     
   Motor_Direction(Erro,Output,Input);
   
-  }
+}
 //------------------------------------------------------------------------//
 
 
@@ -252,7 +265,7 @@ void loop() {
     
   //---------------------------------MPU_Read-------------------------------------//
   
-  while (com.i2cRead(0x3B, i2cData, 14)); // Update all the values //
+  while (com.i2cRead(0x3B, i2cData, 14, debug_i2cread)); // Update all the values //
   accX = (int16_t)((i2cData[0] << 8) | i2cData[1]);
   accY = (int16_t)((i2cData[2] << 8) | i2cData[3]);
   accZ = (int16_t)((i2cData[4] << 8) | i2cData[5]);

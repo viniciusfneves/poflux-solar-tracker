@@ -21,7 +21,7 @@ class comunication {
   const uint16_t I2C_TIMEOUT = 1000; // Used to check for errors in I2C communication
 
   uint8_t i2cWritey(uint8_t registerAddress, uint8_t *data, uint8_t length, bool sendStop);
-  uint8_t i2cRead(uint8_t registerAddress, uint8_t *data, uint8_t nbytes);
+  uint8_t i2cRead(uint8_t registerAddress, uint8_t *data, uint8_t nbytes, bool debug_i2cread);
 
 };
 
