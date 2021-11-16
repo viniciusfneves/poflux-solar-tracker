@@ -1,23 +1,24 @@
 #include "Motor_Comands.h"
 #include <Arduino.h>
+#include <analogWrite.h>
 
 void Driver_Setup :: CW(int pwm) {
   
-  digitalWrite(ENABLE, pwm); //0-255
+  analogWrite(ENABLE, pwm); //0-255
   digitalWrite(LPWM, HIGH);
   digitalWrite(RPWM, LOW);
  }
 
 void Driver_Setup :: CCW(int pwm) {
   
-  digitalWrite(ENABLE, pwm); //0-255
+  analogWrite(ENABLE, pwm); //0-255
   digitalWrite(LPWM, LOW);
   digitalWrite(RPWM, HIGH);
  }
 
 void Driver_Setup :: Stop(int pwm) {
   
-  digitalWrite(ENABLE, pwm); //0-255
+  analogWrite(ENABLE, pwm); //0-255
   digitalWrite(LPWM, LOW);
   digitalWrite(RPWM, LOW);
  }

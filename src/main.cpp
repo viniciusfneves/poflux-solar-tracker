@@ -1,6 +1,7 @@
 // analogWrite to digitalWrite em main.cpp e Motor_Comands.cpp (comentado com 0-255)
 
 #include <Arduino.h>
+#include <analogWrite.h>
 #define DEBUG //ainda não utilizado
 
 
@@ -130,7 +131,13 @@ void setup()
   compAngleY = pitch;
 
   timer = micros();
-  //----------------------------------------------------------------------//
+
+
+  //-----------------------What to Debug---------------------------------//
+
+
+
+
         
   
 }
@@ -152,7 +159,7 @@ void CallRTC()                      //Pega a data e hora do RTC e imprime no mon
     Serial.print(":");
     Serial.print(RTC_Data.second);    //Imprimindo o Segundo
     Serial.print ("  ");
-    delay(1000);                    //Tempo pra atualização do valor enviado pela porta serial
+    //delay(1000);                    //Tempo pra atualização do valor enviado pela porta serial
   }
 
 //------------------------------------------------------------------------//
@@ -166,7 +173,7 @@ void Motor_Direction(int erro, int PWM, int input){
     
   if (90 > input*-1 > -90 && erro < Threshold_Min) //Girar no sentido horário
   { 
-    digitalWrite(ENABLE, PWM); //0-255
+    analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, LOW);
     digitalWrite(RPWM, HIGH);
     Serial.print("Input: ");Serial.print(input);Serial.print("\t");
@@ -175,7 +182,7 @@ void Motor_Direction(int erro, int PWM, int input){
     
   else if ( -90 < input < 90 && erro > Threshold_Max) //Girar no sentido antihorário
   {
-    digitalWrite(ENABLE, PWM); //0-255
+    analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, HIGH);
     digitalWrite(RPWM, LOW);
     Serial.print("Input: ");Serial.print(input);Serial.print("\t");
@@ -185,7 +192,7 @@ void Motor_Direction(int erro, int PWM, int input){
     
    else if (Threshold_Min < erro < Threshold_Max)  //Não Girar
   {
-    digitalWrite(ENABLE, PWM); //0-255
+    analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, LOW);
     digitalWrite(RPWM, LOW);
     Serial.print("Input: ");Serial.print(input);Serial.print("\t");
