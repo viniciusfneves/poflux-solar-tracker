@@ -52,6 +52,13 @@
   
   Driver_Setup Motor;
 
+//-------------------------------Limits-------------------------------//
+
+int Threshold_Max;
+int Threshold_Min;
+ int Max_Angle_Limit;
+ int Min_Angle_Limit;
+
 //----------------------------PID Settings----------------------------//
 
   #include <PID.h>
@@ -62,6 +69,7 @@
 //----------------------------Debug Settings----------------------------//
   bool debug_angles;
   bool debug_i2cread;
+  bool debug_PID;
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
@@ -80,8 +88,10 @@ void setup()
   pinMode(ENABLE, OUTPUT);
 
   //-----------------------What to Debug---------------------------------//
-  debug_angles = false;
-  debug_i2cread = true;
+
+  debug_angles = true;
+  debug_i2cread = false;
+  debug_PID = false;
 
 
   //---------------------------------RTC settings-----------------------------//
@@ -169,11 +179,10 @@ void CallRTC()                      //Pega a data e hora do RTC e imprime no mon
 
 void Motor_Direction(int erro, int PWM, int input)
 {
-  
-  int Threshold_Min = -2;
-  int Threshold_Max = 2;
-  int Max_Angle_Limit = 85;
-  int Min_Angle_Limit = -85;
+  Threshold_Max = 3;
+  Threshold_Min = -Threshold_Max;
+  Max_Angle_Limit = 85;
+  Min_Angle_Limit = -Max_Angle_Limit;
     
   if (90 > input*-1 > -90 && erro < Threshold_Min) //Girar no sentido horário
   { 
@@ -224,21 +233,32 @@ void Erro_Read(int Setpoint,int Input) //Lê os bytes recebidos pela comunicaç�
 {
        
    
-  Setpoint = -60; //test angle, discomment to work properly
-  //Setpoint = constrain(Setpoint,-80,80);
+  //Setpoint = 0; //test angle, discomment to work properly
+  Setpoint = constrain(Setpoint,-80,80);
 
   Input = constrain(Input,-80,80);
    
-  Erro = Setpoint - Input;  
-  Output = PID_Calculator.PID(Erro); 
+  Erro = Setpoint - Input;
+
+  Output = PID_Calculator.PID(abs(Erro), debug_PID, Threshold_Max);
+
+  if(debug_PID)
+  {
+    Serial.print("Erro = ");Serial.print(Erro); Serial.print("\t");
+    Serial.print("OutputPID = ");Serial.print(Output); Serial.print("\t");
+  }
   
   Output = mapeamento(Output,-216,216,110,230); //mudar valores para variáveis 
+
+
   if(debug_angles)
   {
     Serial.print("Erro = ");Serial.print(Erro,DEC);Serial.print("\t");
     Serial.print("Setpoint = ");Serial.print(int(Setpoint),DEC);Serial.print("\t");
-    Serial.print("Output = ");Serial.print(Output); Serial.print("\t");
   }
+  if(debug_angles || debug_PID)
+    Serial.print("Output = ");Serial.print(Output); Serial.print("\t");
+  
     
   Motor_Direction(Erro,Output,Input);
   
