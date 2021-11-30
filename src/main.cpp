@@ -2,13 +2,13 @@
 #include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
 #include <RtcDS3231.h>
 #include <RtcDateTime.h>
+#include <Time.h>
 #include <Wire.h>
 #include <analogWrite.h>
-#include <Time.h>
 
 //----------------------------RTC settings----------------------------------------//
-RtcDS3231<TwoWire> rtc(Wire);  //Criação do objeto do tipo DS3231
-RtcDateTime RTC_Data;          //Criação do objeto do tipo RTCDateTime
+RtcDS3231<TwoWire> rtc(Wire);              //Criação do objeto do tipo DS3231
+RtcDateTime RTC_Data(__DATE__, __TIME__);  //Criação do objeto do tipo RTCDateTime iniciando com tempo do sistema
 
 //----------------------------Kalman settings-------------------------------------//
 #define RESTRICT_PITCH  // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
@@ -75,9 +75,8 @@ void setup() {
     pinMode(ENABLE, OUTPUT);
 
     //---------------------------------RTC settings-----------------------------//
-    rtc.Begin();  //Inicialização do RTC DS3231
-    RtcDateTime time = RtcDateTime(__DATE__, __TIME__);
-    rtc.SetDateTime(time);  //Configurando valores iniciais do RTC DS3231
+    rtc.Begin();                //Inicialização do RTC DS3231
+    rtc.SetDateTime(RTC_Data);  //Configurando valores iniciais do RTC DS3231
 
     Wire.setClock(400000UL);  // Set I2C frequency to 400kHz
 
