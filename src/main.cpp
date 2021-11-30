@@ -70,7 +70,7 @@ void setup()
 {
   //----------------------------I2C settings----------------------------------//
   
-  Serial.begin(9600);
+  Serial.begin(115200);
   Wire.begin();
  
 
