@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 
-namespace Motor {
 class Motor {
    private:
     const int _enable, _lpwm, _rpwm;
@@ -24,21 +23,20 @@ class Motor {
         digitalWrite(_rpwm, LOW);
     }
     void rotateClockwise(int PWM) {
-        analogWrite(_enable, pwm);  //0-255
+        analogWrite(_enable, pwm);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
     }
     void rotateCounterClockwise(int PWM) {
-        analogWrite(_enable, pwm);  //0-255
+        analogWrite(_enable, pwm);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
     }
-    void stop(int PWM) {
-        digitalWrite(_enable, LOW);  //0-255
+    void stop() {
+        digitalWrite(_enable, LOW);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
     }
 }
-}  // namespace Motor
 
 #endif  // MOTORS_HPP
