@@ -1,18 +1,16 @@
-// analogWrite to digitalWrite em main.cpp e Motor_Comands.cpp (comentado com 0-255)
 #include <Arduino.h>
-#include <Wire.h>
-#include <analogWrite.h>
-
-//----------------------------RTC settings----------------------------------------//
+#include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
 #include <RtcDS3231.h>
 #include <RtcDateTime.h>
+#include <Wire.h>
+#include <analogWrite.h>
+#include <Time.h>
 
+//----------------------------RTC settings----------------------------------------//
 RtcDS3231<TwoWire> rtc(Wire);  //Criação do objeto do tipo DS3231
 RtcDateTime RTC_Data;          //Criação do objeto do tipo RTCDateTime
-                               //RTC em seu endereço padrão 0x68
 
 //----------------------------Kalman settings-------------------------------------//
-#include <Kalman.h>     // Source: https://github.com/TKJElectronics/KalmanFilter
 #define RESTRICT_PITCH  // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
 
 Kalman kalmanX;  //Criação de objeto
@@ -30,7 +28,7 @@ uint8_t i2cData[14];  // Buffer for I2C data
 uint8_t dataI2c;
 
 //----------------------------Timerlord settings-------------------------------------//
-#include <Time.h>
+
 float const LONGITUDE = -43.2311486;
 float const LATITUDE = -22.8613427;
 int const TIMEZONE = -3;
