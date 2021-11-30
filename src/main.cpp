@@ -134,31 +134,24 @@ void setup()
   compAngleY = pitch;
 
   timer = micros(); 
-
-
-        
-  
 }
 
 //------------------------------------------------------------------------//
-void CallRTC()                      //Pega a data e hora do RTC e imprime no monitor Serial
-  {
-    RTC_Data = rtc.getDateTime();     //Atribuindo valores instantâneos de data e hora à instância data e hora
-  
-    Serial.print(RTC_Data.day);       //Imprimindo o Dia
-    Serial.print("-");
-    Serial.print(RTC_Data.month);     //Imprimindo o Mês
-    Serial.print("-");
-    Serial.print(RTC_Data.year);      //Imprimindo o Ano
-    Serial.print("  ");
-    Serial.print(RTC_Data.hour);      //Imprimindo a Hora
-    Serial.print(":");
-    Serial.print(RTC_Data.minute);    //Imprimindo o Minuto
-    Serial.print(":");
-    Serial.print(RTC_Data.second);    //Imprimindo o Segundo
-    Serial.print ("  ");
-    //delay(1000);                    //Tempo pra atualização do valor enviado pela porta serial
-  }
+void CallRTC(RTCDateTime &RTC_Data)                      //Imprime no monitor Serial dados do RTC
+{
+  Serial.print(RTC_Data.day);       //Imprimindo o Dia
+  Serial.print("-");
+  Serial.print(RTC_Data.month);     //Imprimindo o Mês
+  Serial.print("-");
+  Serial.print(RTC_Data.year);      //Imprimindo o Ano
+  Serial.print("  ");
+  Serial.print(RTC_Data.hour);      //Imprimindo a Hora
+  Serial.print(":");
+  Serial.print(RTC_Data.minute);    //Imprimindo o Minuto
+  Serial.print(":");
+  Serial.print(RTC_Data.second);    //Imprimindo o Segundo
+  Serial.print ("  ");
+}
 
 //------------------------------------------------------------------------//
 
@@ -223,7 +216,7 @@ void loop() {
   //----------------------------------------------------------------------//
   // Calling RTC before for record of time //
   RTC_Data = rtc.getDateTime();                                 //Atribuindo valores instantâneos de data e hora à instância data e hora
-  CallRTC();                                                   //Buscando Dados RTC
+  CallRTC(RTC_Data);                                            //Buscando Dados RTC
   //----------------------------------------------------------------------//
  
   
