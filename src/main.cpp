@@ -2,74 +2,66 @@
 
 #include <Arduino.h>
 #include <analogWrite.h>
-#define DEBUG //ainda não utilizado
-
 
 //----------------------------RTC settings----------------------------------------//
-  #include <DS3231.h>                     //Biblioteca para manipulação do DS3231
-  #include <Wire.h>                       //Biblioteca para manipulação do protocolo I2C
-  DS3231 rtc;                             //Criação do objeto do tipo DS3231
-  RTCDateTime RTC_Data;                   //Criação do objeto do tipo RTCDateTime
+#include <DS3231.h>                     //Biblioteca para manipulação do DS3231
+#include <Wire.h>                       //Biblioteca para manipulação do protocolo I2C
+DS3231 rtc;                             //Criação do objeto do tipo DS3231
+RTCDateTime RTC_Data;                   //Criação do objeto do tipo RTCDateTime
                                           //RTC em seu endereço padrão 0x68
 
 //----------------------------Kalman settings-------------------------------------//
-  #include <Wire.h>
-  #include <Kalman.h>                     // Source: https://github.com/TKJElectronics/KalmanFilter  
-  #define RESTRICT_PITCH                  // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
-  
-  Kalman kalmanX;                         //Criação de objeto
-  Kalman kalmanY;                         //Criação de objeto
+#include <Kalman.h>                     // Source: https://github.com/TKJElectronics/KalmanFilter  
+#define RESTRICT_PITCH                  // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
+
+Kalman kalmanX;                         //Criação de objeto
+Kalman kalmanY;                         //Criação de objeto
 
 //----------------------------IMU settings---------------------------------------//
-  double accX, accY, accZ;
-  double gyroX, gyroY, gyroZ;
-  int16_t tempRaw;
-  double gyroXangle, gyroYangle;          // Angle calculate using the gyro only
-  double compAngleX, compAngleY;          // Calculated angle using a complementary filter
-  double kalAngleX, kalAngleY;            // Calculated angle using a Kalman filter
-  uint32_t timer;
-  uint8_t i2cData[14];                    // Buffer for I2C data
-  uint8_t dataI2c;
+double accX, accY, accZ;
+double gyroX, gyroY, gyroZ;
+int16_t tempRaw;
+double gyroXangle, gyroYangle;          // Angle calculate using the gyro only
+double compAngleX, compAngleY;          // Calculated angle using a complementary filter
+double kalAngleX, kalAngleY;            // Calculated angle using a Kalman filter
+uint32_t timer;
+uint8_t i2cData[14];                    // Buffer for I2C data
+uint8_t dataI2c;
   
 //----------------------------Timerlord settings-------------------------------------//
-  #include <Time.h>
-  float const LONGITUDE = -43.2311486;
-  float const LATITUDE = -22.8613427;
-  int const TIMEZONE = -3;
-  SunLight Sun_Time;
+#include <Time.h>
+float const LONGITUDE = -43.2311486;
+float const LATITUDE = -22.8613427;
+int const TIMEZONE = -3;
+SunLight Sun_Time;
 
 
 //----------------------------I2c Comunication---------------------------------------//
-  #include <I2Cyangui.h>
-  comunication com;
+#include <I2Cyangui.h>
+comunication com;
 
 //----------------------------Driver Settings---------------------------------------//
 
-  #include <Motor_Comands.h>
-  #define LPWM 4    //lpwm
-  #define RPWM 2    //rpwm
-  #define ENABLE 19  //pwm enable
-  
-  Driver_Setup Motor;
+#include <Motor_Comands.h>
+#define LPWM 4    //lpwm
+#define RPWM 2    //rpwm
+#define ENABLE 19  //pwm enable
+
+Driver_Setup Motor;
 
 //-------------------------------Limits-------------------------------//
 
 int Threshold_Max;
 int Threshold_Min;
- int Max_Angle_Limit;
- int Min_Angle_Limit;
+int Max_Angle_Limit;
+int Min_Angle_Limit;
 
 //----------------------------PID Settings----------------------------//
 
-  #include <PID.h>
-  int Setpoint, Input, Output;         //Define Variables we'll be connecting to
-  PID_Control PID_Calculator;             //PID object
-  int Erro;
-
-//----------------------------Debug Settings----------------------------//
-  bool debug_angles;
-  bool debug_i2cread;
-  bool debug_PID;
+#include <PID.h>
+int Setpoint, Input, Output;         //Define Variables we'll be connecting to
+PID_Control PID_Calculator;             //PID object
+int Erro;
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
@@ -86,13 +78,6 @@ void setup()
   pinMode(LPWM, OUTPUT);
   pinMode(RPWM, OUTPUT);
   pinMode(ENABLE, OUTPUT);
-
-  //-----------------------What to Debug---------------------------------//
-
-  debug_angles = true;
-  debug_i2cread = false;
-  debug_PID = false;
-
 
   //---------------------------------RTC settings-----------------------------//
   rtc.begin();                           //Inicialização do RTC DS3231
@@ -116,7 +101,7 @@ void setup()
   dataI2c = 0x01;      
   while (com.i2cWritey(0x6B, &dataI2c, 1, true));           // PLL with X axis gyroscope reference and disable sleep mode
 
-  while (com.i2cRead(0x75, i2cData, 1, debug_i2cread));
+  while (com.i2cRead(0x75, i2cData, 1, true));
   if (i2cData[0] != 0x68) {                         // Read "WHO_AM_I" register //0x69 for AD0 High default of solar sensor project
     Serial.print(F("Error reading sensor"));
     while (1);
@@ -127,7 +112,7 @@ void setup()
   
   //---------------------------kalman----------------------------------//
   // Set kalman and gyro starting angle //
-  while (com.i2cRead(0x3B, i2cData, 6, debug_i2cread));
+  while (com.i2cRead(0x3B, i2cData, 6, true));
   accX = (int16_t)((i2cData[0] << 8) | i2cData[1]);
   accY = (int16_t)((i2cData[2] << 8) | i2cData[3]);
   accZ = (int16_t)((i2cData[4] << 8) | i2cData[5]);
@@ -189,35 +174,18 @@ void Motor_Direction(int erro, int PWM, int input)
     analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, LOW);
     digitalWrite(RPWM, HIGH);
-    if(debug_angles)
-    {
-    Serial.print("Input: ");Serial.print(input);Serial.print("\t");
-    Serial.print("Sentido: "); Serial.print("Hor"); Serial.print("\t");   
-    }
   }
   else if ( -90 < input < 90 && erro > Threshold_Max) //Girar no sentido antihorário
   {
     analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, HIGH);
     digitalWrite(RPWM, LOW);
-    if(debug_angles)
-    {
-      Serial.print("Input: ");Serial.print(input);Serial.print("\t");
-      Serial.print("Sentido: ");Serial.print("AntiHor"); Serial.print("\t");
-    }
-      
   }
   else if (Threshold_Min < erro < Threshold_Max)  //Não Girar
   {
     analogWrite(ENABLE, PWM); //0-255
     digitalWrite(LPWM, LOW);
     digitalWrite(RPWM, LOW);
-    if(debug_angles)
-    {
-      Serial.print("Input: ");Serial.print(input);Serial.print("\t");
-      Serial.print("Sentido: ");Serial.print("Parado"); Serial.print("\t");   
-    }
-  
   }
 }
 //------------------------------------------------------------------------//
@@ -232,7 +200,6 @@ int mapeamento(int x, int in_min, int in_max, int out_min, int out_max)
 void Erro_Read(int Setpoint,int Input) //Lê os bytes recebidos pela comunicação Master-Slave
 {
        
-   
   //Setpoint = 0; //test angle, discomment to work properly
   Setpoint = constrain(Setpoint,-80,80);
 
@@ -240,26 +207,10 @@ void Erro_Read(int Setpoint,int Input) //Lê os bytes recebidos pela comunicaç�
    
   Erro = Setpoint - Input;
 
-  Output = PID_Calculator.PID(abs(Erro), debug_PID, Threshold_Max);
-
-  if(debug_PID)
-  {
-    Serial.print("Erro = ");Serial.print(Erro); Serial.print("\t");
-    Serial.print("OutputPID = ");Serial.print(Output); Serial.print("\t");
-  }
+  Output = PID_Calculator.PID(abs(Erro), true, Threshold_Max);
   
   Output = mapeamento(Output,-216,216,110,230); //mudar valores para variáveis 
 
-
-  if(debug_angles)
-  {
-    Serial.print("Erro = ");Serial.print(Erro,DEC);Serial.print("\t");
-    Serial.print("Setpoint = ");Serial.print(int(Setpoint),DEC);Serial.print("\t");
-  }
-  if(debug_angles || debug_PID)
-    Serial.print("Output = ");Serial.print(Output); Serial.print("\t");
-  
-    
   Motor_Direction(Erro,Output,Input);
   
 }
@@ -285,7 +236,7 @@ void loop() {
     
   //---------------------------------MPU_Read-------------------------------------//
   
-  while (com.i2cRead(0x3B, i2cData, 14, debug_i2cread)); // Update all the values //
+  while (com.i2cRead(0x3B, i2cData, 14, true)); // Update all the values //
   accX = (int16_t)((i2cData[0] << 8) | i2cData[1]);
   accY = (int16_t)((i2cData[2] << 8) | i2cData[3]);
   accZ = (int16_t)((i2cData[4] << 8) | i2cData[5]);
@@ -354,13 +305,7 @@ void loop() {
   if (gyroYangle < -180 || gyroYangle > 180)
     gyroYangle = kalAngleY;
   
-  
- 
-//----------------------------------------------------------------------//
-  
-
-  delay(2);  //Verificar necessidade desse delay
-
+  //----------------------------------------------------------------------//
   
   Erro_Read(Sun_Setpoint,kalAngleX);
 
@@ -369,10 +314,3 @@ void loop() {
   Serial.println("");
   
 }
-
-
- 
-
-
-
-
