@@ -1,10 +1,12 @@
 #include <Arduino.h>
+#include <I2Cyangui.h>
 #include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
 #include <RtcDS3231.h>
 #include <RtcDateTime.h>
 #include <Time.h>
 #include <Wire.h>
 #include <analogWrite.h>
+#include <motor/motor.hpp>
 
 //----------------------------RTC settings----------------------------------------//
 RtcDS3231<TwoWire> rtc(Wire);              //Criação do objeto do tipo DS3231
@@ -17,10 +19,8 @@ Kalman kalmanX;  //Criação de objeto
 Kalman kalmanY;  //Criação de objeto
 
 //----------------------------IMU settings---------------------------------------//
-double accX, accY, accZ;
-double gyroX, gyroY, gyroZ;
+double accX, accY, accZ, gyroX, gyroY, gyroZ, gyroXangle, gyroYangle;
 int16_t tempRaw;
-double gyroXangle, gyroYangle;  // Angle calculate using the gyro only
 double compAngleX, compAngleY;  // Calculated angle using a complementary filter
 double kalAngleX, kalAngleY;    // Calculated angle using a Kalman filter
 uint32_t timer;
@@ -35,17 +35,13 @@ int const TIMEZONE = -3;
 SunLight Sun_Time;
 
 //----------------------------I2c Comunication---------------------------------------//
-#include <I2Cyangui.h>
 comunication com;
-
 //----------------------------Driver Settings---------------------------------------//
 
-#include <Motor_Comands.h>
 #define LPWM 4     //lpwm
 #define RPWM 2     //rpwm
 #define ENABLE 19  //pwm enable
-
-Driver_Setup Motor;
+Motor motor(ENABLE, LPWM, RPWM);
 
 //-------------------------------Limits-------------------------------//
 
@@ -64,23 +60,21 @@ int Erro;
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
 void setup() {
-    //----------------------------I2C settings----------------------------------//
-
+#ifdef DEBUG
     Serial.begin(115200);
-    Wire.begin();
+#endif
 
-    //----------------------------Driver Configurations----------------------------//
-    pinMode(LPWM, OUTPUT);
-    pinMode(RPWM, OUTPUT);
-    pinMode(ENABLE, OUTPUT);
+    //----------------------------I2C settings----------------------------------//
+    Wire.begin();
+    Wire.setClock(400000UL);  // Set I2C frequency to 400kHz
+                              //frequency between 10kHz-400kHz
+
+    //----------------------------Motor Configurations----------------------------//
+    motor.init();
 
     //---------------------------------RTC settings-----------------------------//
     rtc.Begin();                //Inicialização do RTC DS3231
     rtc.SetDateTime(RTC_Data);  //Configurando valores iniciais do RTC DS3231
-
-    Wire.setClock(400000UL);  // Set I2C frequency to 400kHz
-
-    //frequency between 10kHz-400kHz
 
     i2cData[0] = 7;     // Set the sample rate to 1000Hz - 8kHz/(7+1) = 1000Hz
     i2cData[1] = 0x00;  // Disable FSYNC and set 260 Hz Acc filtering, 256 Hz Gyro filtering, 8 KHz sampling
@@ -102,7 +96,6 @@ void setup() {
     }
 
     delay(100);  // Wait for sensor to stabilize
-    //----------------------------------------------------------------------//
 
     //---------------------------kalman----------------------------------//
     // Set kalman and gyro starting angle //
@@ -137,6 +130,7 @@ void setup() {
 void CallRTC(RtcDateTime &RTC_Data) {
     RTC_Data = rtc.GetDateTime();  //Atribuindo valores instantâneos de data e hora à instância data e hora
 
+#ifdef DEBUG_RTC
     Serial.print(RTC_Data.Day());  //Imprimindo o Dia
     Serial.print("-");
     Serial.print(RTC_Data.Month());  //Imprimindo o Mês
@@ -149,6 +143,7 @@ void CallRTC(RtcDateTime &RTC_Data) {
     Serial.print(":");
     Serial.print(RTC_Data.Second());  //Imprimindo o Segundo
     Serial.print("  ");
+#endif
 }
 
 //------------------------------------------------------------------------//
@@ -159,24 +154,21 @@ void Motor_Direction(int erro, int PWM, int input) {
     Max_Angle_Limit = 85;
     Min_Angle_Limit = -Max_Angle_Limit;
 
-    if (90 > input * -1 > -90 && erro < Threshold_Min)  //Girar no sentido horário
-    {
-        analogWrite(ENABLE, PWM);  //0-255
-        digitalWrite(LPWM, LOW);
-        digitalWrite(RPWM, HIGH);
+    if (90 > input * -1 > -90 && erro < Threshold_Min) {
+        motor.rotateClockwise(PWM);
+#ifdef DEBUG_MOTOR
         Serial.print(" | Motor: Horário");
-    } else if (-90 < input < 90 && erro > Threshold_Max)  //Girar no sentido antihorário
-    {
-        analogWrite(ENABLE, PWM);  //0-255
-        digitalWrite(LPWM, HIGH);
-        digitalWrite(RPWM, LOW);
+#endif
+    } else if (-90 < input < 90 && erro > Threshold_Max) {
+        motor.rotateCounterClockwise(PWM);
+#ifdef DEBUG_MOTOR
         Serial.print(" | Motor: Anti-Horário");
-    } else if (Threshold_Min < erro < Threshold_Max)  //Não Girar
-    {
-        analogWrite(ENABLE, PWM);  //0-255
-        digitalWrite(LPWM, LOW);
-        digitalWrite(RPWM, LOW);
+#endif
+    } else if (Threshold_Min < erro < Threshold_Max) {
+        motor.stop();
+#ifdef DEBUG_MOTOR
         Serial.print(" | Motor: Parado");
+#endif
     }
 }
 //------------------------------------------------------------------------//
@@ -199,9 +191,11 @@ void Erro_Read(int Setpoint, int Input) {
 
     Output = mapeamento(Output, -216, 216, 110, 230);  //mudar valores para variáveis
 
-#ifdef DEBUG
+#ifdef DEBUG_IMU
     Serial.print("Setpoint: ");
     Serial.print(Setpoint);
+    Serial.print(" | IMU: ");
+    Serial.print(Input);
     Serial.print(" | Erro: ");
     Serial.print(Erro);
 #endif
@@ -212,12 +206,8 @@ void Erro_Read(int Setpoint, int Input) {
 
 //::::::::::::::::::::::::::::::::::::LOOP:::::::::::::::::::::::::::::::::::::::://
 void loop() {
-    //----------------------------------------------------------------------//
-    // Calling RTC before for record of time //
-    CallRTC(RTC_Data);  //Buscando Dados RTC
-    //----------------------------------------------------------------------//
+    CallRTC(RTC_Data);  //Atualizando leitura do RTC
 
-    //----------------------------------------------------------------------//
     // Calculating Sun parameters  //
 
     Sun_Time.Sun_Range(LONGITUDE, LATITUDE, TIMEZONE);
@@ -300,6 +290,7 @@ void loop() {
     Erro_Read(Sun_Setpoint, kalAngleX);
 
     //-------------------------------------------------------------------------//
-
+#ifdef DEBUG
     Serial.println("");
+#endif
 }

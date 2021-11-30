@@ -5,10 +5,9 @@
 
 class Motor {
    private:
-    const int _enable, _lpwm, _rpwm;
+    int _enable, _lpwm, _rpwm;
 
    public:
-    // -- CONSTRUTOR -- //
     Motor(int enable_pin, int lpwm_pin, int rpwm_pin) {
         _enable = enable_pin;
         _lpwm = lpwm_pin;
@@ -23,12 +22,12 @@ class Motor {
         digitalWrite(_rpwm, LOW);
     }
     void rotateClockwise(int PWM) {
-        analogWrite(_enable, pwm);
+        analogWrite(_enable, PWM);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
     }
     void rotateCounterClockwise(int PWM) {
-        analogWrite(_enable, pwm);
+        analogWrite(_enable, PWM);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
     }
@@ -37,6 +36,6 @@ class Motor {
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
     }
-}
+};
 
 #endif  // MOTORS_HPP
