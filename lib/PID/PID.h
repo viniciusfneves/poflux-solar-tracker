@@ -20,7 +20,7 @@ class PID_Control
   
   public:
 
-    int PID (double error, bool debug, int threshold);
+    int PID (double error, int threshold);
  
   };
 

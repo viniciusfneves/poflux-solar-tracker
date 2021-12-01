@@ -66,8 +66,7 @@ void setup() {
 
     //----------------------------I2C settings----------------------------------//
     Wire.begin();
-    Wire.setClock(400000UL);  // Set I2C frequency to 400kHz
-                              //frequency between 10kHz-400kHz
+    Wire.setClock(400000UL);  // Set I2C frequency to 400kHz (frequency between 10kHz-400kHz)
 
     //----------------------------Motor Configurations----------------------------//
     motor.init();
@@ -127,7 +126,7 @@ void setup() {
 //------------------------------------------------------------------------//
 //Atualiza os valores de data e hora instantâneos lidos pelo RTC
 //Imprime no monitor Serial dados do RTC
-void CallRTC(RtcDateTime &RTC_Data) {
+void callRTC(RtcDateTime &RTC_Data) {
     RTC_Data = rtc.GetDateTime();  //Atribuindo valores instantâneos de data e hora à instância data e hora
 
 #ifdef DEBUG_RTC
@@ -187,26 +186,23 @@ void Erro_Read(int Setpoint, int Input) {
 
     Erro = Setpoint - Input;
 
-    Output = PID_Calculator.PID(abs(Erro), true, Threshold_Max);
+    Output = PID_Calculator.PID(abs(Erro), Threshold_Max);
 
     Output = mapeamento(Output, -216, 216, 110, 230);  //mudar valores para variáveis
 
 #ifdef DEBUG_IMU
     Serial.print("Setpoint: ");
     Serial.print(Setpoint);
-    Serial.print(" | IMU: ");
-    Serial.print(Input);
     Serial.print(" | Erro: ");
     Serial.print(Erro);
 #endif
 
     Motor_Direction(Erro, Output, Input);
 }
-//------------------------------------------------------------------------//
 
-//::::::::::::::::::::::::::::::::::::LOOP:::::::::::::::::::::::::::::::::::::::://
 void loop() {
-    CallRTC(RTC_Data);  //Atualizando leitura do RTC
+    callRTC(RTC_Data);  //Atualiza RTC
+    //callMPU(MPU_Data);  // Atualiza MPU
 
     // Calculating Sun parameters  //
 
@@ -289,7 +285,6 @@ void loop() {
 
     Erro_Read(Sun_Setpoint, kalAngleX);
 
-    //-------------------------------------------------------------------------//
 #ifdef DEBUG
     Serial.println("");
 #endif
