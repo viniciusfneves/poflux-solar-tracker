@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
+#include <PID.h>
 #include <RtcDS3231.h>
 #include <RtcDateTime.h>
 #include <Time.h>
@@ -11,16 +12,19 @@
 #include <motor/motor.hpp>
 
 //----------------------------RTC settings----------------------------------------//
+
 RtcDS3231<TwoWire> rtc(Wire);              //Criação do objeto do tipo DS3231
 RtcDateTime RTC_Data(__DATE__, __TIME__);  //Criação do objeto do tipo RTCDateTime iniciando com tempo do sistema
 
 //----------------------------Kalman settings-------------------------------------//
+
 #define RESTRICT_PITCH  // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
 
 Kalman kalmanX;  //Criação de objeto
 Kalman kalmanY;  //Criação de objeto
 
 //----------------------------IMU settings---------------------------------------//
+
 MPUData MPU_Data;
 MPU6050_Solar mpu(0x69, MPU_Data);
 double gyroXangle, gyroYangle;
@@ -53,7 +57,6 @@ int Min_Angle_Limit;
 
 //----------------------------PID Settings----------------------------//
 
-#include <PID.h>
 int Setpoint, Input, Output;  //Define Variables we'll be connecting to
 PID_Control PID_Calculator;   //PID object
 int Erro;
@@ -122,19 +125,6 @@ void callRTC(RtcDateTime &RTC_Data) {
 #endif
 }
 
-void callMPU() {
-    mpu.readMPU();
-
-#ifdef DEBUG_MPU
-    Serial.print(" | X= ");
-    Serial.print(MPU_Data.AcX);
-    Serial.print(" | Y= ");
-    Serial.print(MPU_Data.AcY);
-    Serial.print(" | Z= ");
-    Serial.print(MPU_Data.AcZ);
-#endif
-}
-
 //------------------------------------------------------------------------//
 
 void Motor_Direction(int erro, int PWM, int input) {
@@ -145,19 +135,10 @@ void Motor_Direction(int erro, int PWM, int input) {
 
     if (90 > input * -1 > -90 && erro < Threshold_Min) {
         motor.rotateClockwise(PWM);
-#ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Horário");
-#endif
     } else if (-90 < input < 90 && erro > Threshold_Max) {
         motor.rotateCounterClockwise(PWM);
-#ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Anti-Horário");
-#endif
     } else if (Threshold_Min < erro < Threshold_Max) {
         motor.stop();
-#ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Parado");
-#endif
     }
 }
 //------------------------------------------------------------------------//
@@ -180,8 +161,8 @@ void Erro_Read(int Setpoint, int Input) {
 
     Output = mapeamento(Output, -216, 216, 110, 230);  //mudar valores para variáveis
 
-#ifdef DEBUG_IMU
-    Serial.print("Setpoint: ");
+#ifdef DEBUG_MPU
+    Serial.print(" | Setpoint: ");
     Serial.print(Setpoint);
     Serial.print(" | Erro: ");
     Serial.print(Erro);
@@ -192,7 +173,7 @@ void Erro_Read(int Setpoint, int Input) {
 
 void loop() {
     callRTC(RTC_Data);  // Atualiza RTC
-    callMPU();          // Atualiza MPU
+    mpu.readMPU();      // Atualiza MPU
 
     // Calculating Sun parameters  //
 

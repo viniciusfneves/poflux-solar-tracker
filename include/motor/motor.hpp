@@ -13,6 +13,7 @@ class Motor {
         _lpwm = lpwm_pin;
         _rpwm = rpwm_pin;
     }
+
     void init() {
         pinMode(_enable, OUTPUT);
         pinMode(_lpwm, OUTPUT);
@@ -21,20 +22,38 @@ class Motor {
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
     }
+
     void rotateClockwise(int PWM) {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
+
+        //-- DEBUG --//
+#ifdef DEBUG_MOTOR
+        Serial.print(" | Motor: Horário");
+#endif
     }
+
     void rotateCounterClockwise(int PWM) {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
+
+        //-- DEBUG --//
+#ifdef DEBUG_MOTOR
+        Serial.print(" | Motor: Anti-Horário");
+#endif
     }
+
     void stop() {
         digitalWrite(_enable, LOW);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
+
+        //-- DEBUG --//
+#ifdef DEBUG_MOTOR
+        Serial.print(" | Motor: Parado");
+#endif
     }
 };
 
