@@ -165,11 +165,11 @@ void Erro_Read(int Setpoint, int Input) {
 
 #ifdef DEBUG_ERRO
     Serial.print(" | Setpoint: ");
-    Serial.print(Setpoint);
+    Serial.printf("%02d", Setpoint);
     Serial.print(" | Input: ");
-    Serial.print(Input);
+    Serial.printf("%02d", Input);
     Serial.print(" | Erro: ");
-    Serial.print(Erro);
+    Serial.printf("%02d", Erro);
 #endif
 
     Motor_Direction(Erro, Output, Input);
@@ -191,37 +191,22 @@ void loop() {
     // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
     // It is then converted from radians to degrees
 
-#ifdef RESTRICT_PITCH
-    MPU_Data.AcX = map(MPU_Data.AcX, minVal, maxVal, -90, 90);
-    MPU_Data.AcY = map(MPU_Data.AcY, minVal, maxVal, -90, 90);
-    MPU_Data.AcZ = map(MPU_Data.AcZ, minVal, maxVal, -90, 90);              // Eq. 25 and 26
-    double roll = RAD_TO_DEG * (atan2(-MPU_Data.AcY, -MPU_Data.AcZ) + PI);  //atan2 outputs the value of -π to π (radians. It is then converted from radians to degrees
-    double pitch = RAD_TO_DEG * (atan2(-MPU_Data.AcX, -MPU_Data.AcZ) + PI);
-    Serial.print("Roll: ");
-    Serial.print(roll);
-    Serial.print(" | Pitch: ");
-    Serial.print(pitch);
-#else  // Eq. 28 and 29
-    double roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
-    double pitch = atan2(-accX, accZ) * RAD_TO_DEG;
-#endif
-
     double gyroXrate = MPU_Data.GyX / 131.0;  // Convert to deg/s
     double gyroYrate = MPU_Data.GyY / 131.0;  // Convert to deg/s
 
 #ifdef RESTRICT_PITCH
     // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
-    if ((roll < -90 && kalAngleX > 90) || (roll > 90 && kalAngleX < -90)) {
-        kalmanX.setAngle(roll);
-        compAngleX = roll;
-        kalAngleX = roll;
-        gyroXangle = roll;
+    if ((MPU_Data.roll < -90 && kalAngleX > 90) || (MPU_Data.roll > 90 && kalAngleX < -90)) {
+        kalmanX.setAngle(MPU_Data.roll);
+        compAngleX = MPU_Data.roll;
+        kalAngleX = MPU_Data.roll;
+        gyroXangle = MPU_Data.roll;
     } else
-        kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
+        kalAngleX = kalmanX.getAngle(MPU_Data.roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
 
     if (abs(kalAngleX) > 90)
         gyroYrate = -gyroYrate;  // Invert rate, so it fits the restriced accelerometer reading
-    kalAngleY = kalmanY.getAngle(pitch, gyroYrate, dt);
+    kalAngleY = kalmanY.getAngle(MPU_Data.pitch, gyroYrate, dt);
 #else
     // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
     if ((pitch < -90 && kalAngleY > 90) || (pitch > 90 && kalAngleY < -90)) {
@@ -242,8 +227,8 @@ void loop() {
     //gyroXangle += kalmanX.getRate() * dt; // Calculate gyro angle using the unbiased rate
     //gyroYangle += kalmanY.getRate() * dt;
 
-    compAngleX = 0.93 * (compAngleX + gyroXrate * dt) + 0.07 * roll;  // Calculate the angle using a Complimentary filter
-    compAngleY = 0.93 * (compAngleY + gyroYrate * dt) + 0.07 * pitch;
+    compAngleX = 0.93 * (compAngleX + gyroXrate * dt) + 0.07 * MPU_Data.roll;  // Calculate the angle using a Complimentary filter
+    compAngleY = 0.93 * (compAngleY + gyroYrate * dt) + 0.07 * MPU_Data.pitch;
 
     if (gyroXangle < -180 || gyroXangle > 180)  // Reset the gyro angle when it has drifted too much
         gyroXangle = kalAngleX;
@@ -252,7 +237,7 @@ void loop() {
 
     //----------------------------------------------------------------------//
 
-    Erro_Read(Sun_Setpoint, roll);
+    Erro_Read(Sun_Setpoint, MPU_Data.roll);
 
 #ifdef DEBUG
     Serial.println("");
