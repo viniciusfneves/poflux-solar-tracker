@@ -15,10 +15,9 @@ class MPU6050_Solar {
     MPUData _data;
 
    public:
-    MPU6050_Solar(int MPUAddress, MPUData& data, int I2C_timeout = 1000) {
+    MPU6050_Solar(int MPUAddress, int I2C_timeout = 1000) {
         _MPUAddress = MPUAddress;
         _I2C_timeout = I2C_timeout;
-        _data = data;
     }
 
     void init() {
@@ -42,7 +41,7 @@ class MPU6050_Solar {
         delay(100);
     }
 
-    void readMPU() {
+    MPUData readMPU() {
         Wire.beginTransmission(_MPUAddress);
         Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
         Wire.endTransmission(false);
@@ -66,6 +65,7 @@ class MPU6050_Solar {
         Serial.print(" | Z= ");
         Serial.print(_data.AcZ);
 #endif
+        return _data;
     }
 };
 

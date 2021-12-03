@@ -26,7 +26,7 @@ Kalman kalmanY;  //Criação de objeto
 //----------------------------IMU settings---------------------------------------//
 
 MPUData MPU_Data;
-MPU6050_Solar mpu(0x69, MPU_Data);
+MPU6050_Solar mpu(0x69);
 double gyroXangle, gyroYangle;
 double compAngleX, compAngleY;  // Calculated angle using a complementary filter
 double kalAngleX, kalAngleY;    // Calculated angle using a Kalman filter
@@ -78,8 +78,8 @@ void setup() {
     rtc.SetDateTime(RTC_Data);  //Configurando valores iniciais do RTC DS3231
 
     //---------------------------------MPU settings-----------------------------//
-    mpu.init();     // Configura e inicia o MPU
-    mpu.readMPU();  // realiza a primeira leitura do MPU para preencher os dados do MPUData
+    mpu.init();                // Configura e inicia o MPU
+    MPU_Data = mpu.readMPU();  // realiza a primeira leitura do MPU para preencher os dados do MPUData
 
     //---------------------------Kalman----------------------------------//
 // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
@@ -153,7 +153,7 @@ void Erro_Read(int Setpoint, int Input) {
 
     Input = constrain(Input, -80, 80);
 
-    Erro = Setpoint - Input;
+    Erro = Input - Setpoint;
 
     Output = PID_Calculator.PID(abs(Erro), Threshold_Max);
 
@@ -170,8 +170,8 @@ void Erro_Read(int Setpoint, int Input) {
 }
 
 void loop() {
-    callRTC(RTC_Data);  // Atualiza RTC
-    mpu.readMPU();      // Atualiza MPU
+    callRTC(RTC_Data);         // Atualiza RTC
+    MPU_Data = mpu.readMPU();  // Atualiza MPU
 
     // Calculating Sun parameters  //
 
