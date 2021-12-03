@@ -11,6 +11,9 @@
 #include <MPU/MPU.hpp>
 #include <motor/motor.hpp>
 
+const int minVal = 265;
+const int maxVal = 402;
+
 //----------------------------RTC settings----------------------------------------//
 
 RtcDS3231<TwoWire> rtc(Wire);              //Criação do objeto do tipo DS3231
@@ -83,7 +86,8 @@ void setup() {
 
     //---------------------------Kalman----------------------------------//
 // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
-#ifdef RESTRICT_PITCH                                              // Eq. 25 and 26
+#ifdef RESTRICT_PITCH
+    // Eq. 25 and 26
     double roll = atan2(MPU_Data.AcY, MPU_Data.AcZ) * RAD_TO_DEG;  //atan2 outputs the value of -π to π (radians. It is then converted from radians to degrees
     double pitch = atan(-MPU_Data.AcX / sqrt(pow(MPU_Data.AcY, 2) + pow(MPU_Data.AcZ, 2))) * RAD_TO_DEG;
 #else  // Eq. 28 and 29
@@ -159,9 +163,11 @@ void Erro_Read(int Setpoint, int Input) {
 
     Output = mapeamento(Output, -216, 216, 110, 230);  //mudar valores para variáveis
 
-#ifdef DEBUG_MPU
+#ifdef DEBUG_ERRO
     Serial.print(" | Setpoint: ");
     Serial.print(Setpoint);
+    Serial.print(" | Input: ");
+    Serial.print(Input);
     Serial.print(" | Erro: ");
     Serial.print(Erro);
 #endif
@@ -185,9 +191,16 @@ void loop() {
     // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
     // It is then converted from radians to degrees
 
-#ifdef RESTRICT_PITCH                                              // Eq. 25 and 26
-    double roll = atan2(MPU_Data.AcY, MPU_Data.AcZ) * RAD_TO_DEG;  //atan2 outputs the value of -π to π (radians. It is then converted from radians to degrees
-    double pitch = atan(-MPU_Data.AcX / sqrt(pow(MPU_Data.AcY, 2) + pow(MPU_Data.AcZ, 2))) * RAD_TO_DEG;
+#ifdef RESTRICT_PITCH
+    MPU_Data.AcX = map(MPU_Data.AcX, minVal, maxVal, -90, 90);
+    MPU_Data.AcY = map(MPU_Data.AcY, minVal, maxVal, -90, 90);
+    MPU_Data.AcZ = map(MPU_Data.AcZ, minVal, maxVal, -90, 90);              // Eq. 25 and 26
+    double roll = RAD_TO_DEG * (atan2(-MPU_Data.AcY, -MPU_Data.AcZ) + PI);  //atan2 outputs the value of -π to π (radians. It is then converted from radians to degrees
+    double pitch = RAD_TO_DEG * (atan2(-MPU_Data.AcX, -MPU_Data.AcZ) + PI);
+    Serial.print("Roll: ");
+    Serial.print(roll);
+    Serial.print(" | Pitch: ");
+    Serial.print(pitch);
 #else  // Eq. 28 and 29
     double roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
     double pitch = atan2(-accX, accZ) * RAD_TO_DEG;
@@ -239,7 +252,7 @@ void loop() {
 
     //----------------------------------------------------------------------//
 
-    Erro_Read(Sun_Setpoint, kalAngleX);
+    Erro_Read(Sun_Setpoint, roll);
 
 #ifdef DEBUG
     Serial.println("");
