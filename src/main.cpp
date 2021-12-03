@@ -31,8 +31,6 @@ double gyroXangle, gyroYangle;
 double compAngleX, compAngleY;  // Calculated angle using a complementary filter
 double kalAngleX, kalAngleY;    // Calculated angle using a Kalman filter
 uint32_t timer;
-uint8_t i2cData[14];  // Buffer for I2C data
-uint8_t dataI2c;
 
 //----------------------------Timerlord settings-------------------------------------//
 
