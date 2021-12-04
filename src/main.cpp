@@ -81,8 +81,8 @@ void setup() {
     rtc.SetDateTime(RTC_Data);  //Configurando valores iniciais do RTC DS3231
 
     //---------------------------------MPU settings-----------------------------//
-    mpu.init();                // Configura e inicia o MPU
-    MPU_Data = mpu.readMPU();  // realiza a primeira leitura do MPU para preencher os dados do MPUData
+    mpu.init();             // Configura e inicia o MPU
+    mpu.readMPU(MPU_Data);  // realiza a primeira leitura do MPU para preencher os dados do MPUData
 
     //---------------------------Kalman----------------------------------//
 // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
@@ -176,8 +176,8 @@ void Erro_Read(int Setpoint, int Input) {
 }
 
 void loop() {
-    callRTC(RTC_Data);         // Atualiza RTC
-    MPU_Data = mpu.readMPU();  // Atualiza MPU
+    callRTC(RTC_Data);      // Atualiza RTC
+    mpu.readMPU(MPU_Data);  // Atualiza MPU
 
     // Calculating Sun parameters  //
 
