@@ -6,13 +6,9 @@
 #include <Time.h>
 #include <Wire.h>
 #include <analogWrite.h>
-#include <math.h>
 
 #include <MPU/MPU.hpp>
 #include <motor/motor.hpp>
-
-const int minVal = 265;
-const int maxVal = 402;
 
 //----------------------------RTC settings----------------------------------------//
 
@@ -85,22 +81,14 @@ void setup() {
     mpu.readMPU(MPU_Data);  // realiza a primeira leitura do MPU para preencher os dados do MPUData
 
     //---------------------------Kalman----------------------------------//
-// Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
-#ifdef RESTRICT_PITCH
-    // Eq. 25 and 26
-    double roll = atan2(MPU_Data.AcY, MPU_Data.AcZ) * RAD_TO_DEG;  //atan2 outputs the value of -π to π (radians. It is then converted from radians to degrees
-    double pitch = atan(-MPU_Data.AcX / sqrt(pow(MPU_Data.AcY, 2) + pow(MPU_Data.AcZ, 2))) * RAD_TO_DEG;
-#else  // Eq. 28 and 29
-    double roll = atan(accY / sqrt(accX * accX + accZ * accZ)) * RAD_TO_DEG;
-    double pitch = atan2(-accX, accZ) * RAD_TO_DEG;
-#endif
+    // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
 
-    kalmanX.setAngle(roll);  // Set starting angle
-    kalmanY.setAngle(pitch);
-    gyroXangle = roll;
-    gyroYangle = pitch;
-    compAngleX = roll;
-    compAngleY = pitch;
+    kalmanX.setAngle(MPU_Data.roll);  // Set starting angle
+    //kalmanY.setAngle(pitch);
+    gyroXangle = MPU_Data.roll;
+    //gyroYangle = pitch;
+    compAngleX = MPU_Data.roll;
+    //compAngleY = pitch;
 
     timer = micros();
 }
@@ -112,17 +100,17 @@ void callRTC(RtcDateTime &RTC_Data) {
     RTC_Data = rtc.GetDateTime();  //Atribuindo valores instantâneos de data e hora à instância data e hora
 
 #ifdef DEBUG_RTC
-    Serial.print(RTC_Data.Day());  //Imprimindo o Dia
+    Serial.print(RTC_Data.Day());
     Serial.print("-");
-    Serial.print(RTC_Data.Month());  //Imprimindo o Mês
+    Serial.print(RTC_Data.Month());
     Serial.print("-");
-    Serial.print(RTC_Data.Year());  //Imprimindo o Ano
+    Serial.print(RTC_Data.Year());
     Serial.print("  ");
-    Serial.print(RTC_Data.Hour());  //Imprimindo a Hora
+    Serial.print(RTC_Data.Hour());
     Serial.print(":");
-    Serial.print(RTC_Data.Minute());  //Imprimindo o Minuto
+    Serial.print(RTC_Data.Minute());
     Serial.print(":");
-    Serial.print(RTC_Data.Second());  //Imprimindo o Segundo
+    Serial.print(RTC_Data.Second());
     Serial.print("  ");
 #endif
 }
@@ -192,7 +180,7 @@ void loop() {
     // It is then converted from radians to degrees
 
     double gyroXrate = MPU_Data.GyX / 131.0;  // Convert to deg/s
-    double gyroYrate = MPU_Data.GyY / 131.0;  // Convert to deg/s
+    //double gyroYrate = MPU_Data.GyY / 131.0;  // Convert to deg/s
 
 #ifdef RESTRICT_PITCH
     // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
@@ -204,9 +192,9 @@ void loop() {
     } else
         kalAngleX = kalmanX.getAngle(MPU_Data.roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
 
-    if (abs(kalAngleX) > 90)
-        gyroYrate = -gyroYrate;  // Invert rate, so it fits the restriced accelerometer reading
-    kalAngleY = kalmanY.getAngle(MPU_Data.pitch, gyroYrate, dt);
+        //if (abs(kalAngleX) > 90)
+        //gyroYrate = -gyroYrate;  // Invert rate, so it fits the restriced accelerometer reading
+        //kalAngleY = kalmanY.getAngle(MPU_Data.pitch, gyroYrate, dt);
 #else
     // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
     if ((pitch < -90 && kalAngleY > 90) || (pitch > 90 && kalAngleY < -90)) {
@@ -223,17 +211,17 @@ void loop() {
 #endif
 
     gyroXangle += gyroXrate * dt;  // Calculate gyro angle without any filter
-    gyroYangle += gyroYrate * dt;
+    //gyroYangle += gyroYrate * dt;
     //gyroXangle += kalmanX.getRate() * dt; // Calculate gyro angle using the unbiased rate
     //gyroYangle += kalmanY.getRate() * dt;
 
     compAngleX = 0.93 * (compAngleX + gyroXrate * dt) + 0.07 * MPU_Data.roll;  // Calculate the angle using a Complimentary filter
-    compAngleY = 0.93 * (compAngleY + gyroYrate * dt) + 0.07 * MPU_Data.pitch;
+    //compAngleY = 0.93 * (compAngleY + gyroYrate * dt) + 0.07 * MPU_Data.pitch;
 
     if (gyroXangle < -180 || gyroXangle > 180)  // Reset the gyro angle when it has drifted too much
         gyroXangle = kalAngleX;
-    if (gyroYangle < -180 || gyroYangle > 180)
-        gyroYangle = kalAngleY;
+    //if (gyroYangle < -180 || gyroYangle > 180)
+    //gyroYangle = kalAngleY;
 
     //----------------------------------------------------------------------//
 
