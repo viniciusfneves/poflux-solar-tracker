@@ -6,7 +6,7 @@
 
 //Estutura para armazenar os dados do MPU
 struct MPUData {
-    int AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+    double AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
     double roll, pitch, yaw;
 };
 
@@ -33,7 +33,7 @@ class MPU6050_Solar {
         // -- Configuração do Acelerômetro -- //
         Wire.beginTransmission(_MPUAddress);
         Wire.write(0x1C);  // Registro de configuração do Gyro
-        Wire.write(0x00);  // Configura o Full Scale Range para + ou - 250 graus por segundo
+        Wire.write(0x00);  // Configura o Full Scale Range para + ou - 2g graus por segundo
         Wire.endTransmission(true);
         // Ativa o MPU
         Wire.beginTransmission(_MPUAddress);
@@ -63,30 +63,35 @@ class MPU6050_Solar {
         // Aceleração  = G
         // Temperatura = Celsius
         // Gyro        = Rad/s
-        _data.AcX *= _RAW_TO_G;
-        _data.AcY *= _RAW_TO_G;
-        _data.AcZ *= _RAW_TO_G;
-        _data.Tmp = _data.Tmp * _RAW_TO_CELSIUS + 35;
-        _data.GyX *= _RAW_TO_RAD_PER_SECOND;
-        _data.GyY *= _RAW_TO_RAD_PER_SECOND;
-        _data.GyZ *= _RAW_TO_RAD_PER_SECOND;
+        _data.AcX /= _RAW_TO_G;
+        _data.AcY /= _RAW_TO_G;
+        _data.AcZ /= _RAW_TO_G;
+        _data.Tmp = _data.Tmp / _RAW_TO_CELSIUS + 35;
+        _data.GyX /= _RAW_TO_RAD_PER_SECOND;
+        _data.GyY /= _RAW_TO_RAD_PER_SECOND;
+        _data.GyZ /= _RAW_TO_RAD_PER_SECOND;
 
-        _data.roll = RAD_TO_DEG * (atan2(_data.AcZ, _data.AcY) + PI / 2);
-        _data.pitch = RAD_TO_DEG * (atan2(_data.AcZ, _data.AcX) + PI / 2);
+        if (_data.AcY > 2) {
+            _data.AcY -= 4;
+            _data.roll = RAD_TO_DEG * (atan2(-_data.AcZ, _data.AcY) + PI / 2);
+        } else
+            _data.roll = RAD_TO_DEG * (atan2(-_data.AcZ, _data.AcY) + PI / 2);
 
-        //-- DEBUG --//
+            //_data.pitch = RAD_TO_DEG * (atan2(-_data.AcZ, _data.AcX) + PI / 2);
+
+            //-- DEBUG --//
 
 #ifdef DEBUG_MPU
         Serial.print(" | X Gs: ");
-        Serial.printf("%05d", _data.AcX);
+        Serial.printf("%05.3f", _data.AcX);
         Serial.print(" | Y Gs: ");
-        Serial.printf("%05d", _data.AcY);
+        Serial.printf("%05.3f", _data.AcY);
         Serial.print(" | Z Gs: ");
-        Serial.printf("%05d", _data.AcZ);
+        Serial.printf("%5.3f", _data.AcZ);
         Serial.print(" | Roll Angle: ");
-        Serial.printf("%03f", _data.roll);
+        Serial.printf("%5.3f", _data.roll);
         Serial.print(" | Pitch Angle: ");
-        Serial.printf("%03f", _data.pitch);
+        Serial.printf("%5.3f", _data.pitch);
         // Serial.print(" | Gyro X: ");
         // Serial.printf("%05d", _data.GyX);
         // Serial.print(" | Gyro Y: ");
