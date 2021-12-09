@@ -24,6 +24,7 @@ class Motor {
     }
 
     void rotateClockwise(int PWM) {
+        PWM = map(PWM, 1, 255, 180, 255);
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
@@ -31,10 +32,13 @@ class Motor {
         //-- DEBUG --//
 #ifdef DEBUG_MOTOR
         Serial.print(" | Motor: Horário");
+        Serial.print(" | PWM: ");
+        Serial.printf("%03d", PWM);
 #endif
     }
 
     void rotateCounterClockwise(int PWM) {
+        PWM = map(PWM, 1, 255, 180, 255);
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
@@ -42,6 +46,8 @@ class Motor {
         //-- DEBUG --//
 #ifdef DEBUG_MOTOR
         Serial.print(" | Motor: Anti-Horário");
+        Serial.print(" | PWM: ");
+        Serial.printf("%03d", PWM);
 #endif
     }
 
