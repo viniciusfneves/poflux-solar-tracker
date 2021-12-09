@@ -82,15 +82,15 @@ class MPU6050_Solar {
             //-- DEBUG --//
 
 #ifdef DEBUG_MPU
-        Serial.print(" | X Gs: ");
-        Serial.printf("%05.3f", _data.AcX);
-        Serial.print(" | Y Gs: ");
-        Serial.printf("%05.3f", _data.AcY);
-        Serial.print(" | Z Gs: ");
-        Serial.printf("%5.3f", _data.AcZ);
-        Serial.print(" | Roll Angle: ");
+        // Serial.print(" | X Gs: ");
+        // Serial.printf("%05.3f", _data.AcX);
+        // Serial.print(" | Y Gs: ");
+        // Serial.printf("%05.3f", _data.AcY);
+        // Serial.print(" | Z Gs: ");
+        // Serial.printf("%5.3f", _data.AcZ);
+        Serial.print(" | MPU Roll: ");
         Serial.printf("%5.3f", _data.roll);
-        Serial.print(" | Pitch Angle: ");
+        Serial.print(" | MPU Pitch: ");
         Serial.printf("%5.3f", _data.pitch);
         // Serial.print(" | Gyro X: ");
         // Serial.printf("%05d", _data.GyX);
@@ -98,7 +98,6 @@ class MPU6050_Solar {
         // Serial.printf("%05d", _data.GyY);
         // Serial.print(" | Gyro Z: ");
         // Serial.printf("%05d", _data.GyZ);
-        Serial.print("\t");
 #endif
     }
 };
