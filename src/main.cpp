@@ -8,6 +8,7 @@
 #include <analogWrite.h>
 
 #include <MPU/MPU.hpp>
+#include <PID/PID_Controller.hpp>
 #include <motor/motor.hpp>
 
 //----------------------------RTC settings----------------------------------------//
@@ -53,11 +54,7 @@ int Max_Angle_Limit;
 int Min_Angle_Limit;
 
 //----------------------------PID Settings----------------------------//
-
-int Setpoint, Input, Output;  //Define Variables we'll be connecting to
-PID_Control PID_Calculator;   //PID object
-int Erro;
-
+PID_Controller pid(1, 0.3, 0.4);
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
 void setup() {
@@ -117,50 +114,35 @@ void callRTC(RtcDateTime &RTC_Data) {
 
 //------------------------------------------------------------------------//
 
-void Motor_Direction(int erro, int PWM, int input) {
-    Threshold_Max = 3;
-    Threshold_Min = -Threshold_Max;
-    Max_Angle_Limit = 85;
-    Min_Angle_Limit = -Max_Angle_Limit;
-
-    if (90 > input * -1 > -90 && erro < Threshold_Min) {
-        motor.rotateClockwise(PWM);
-    } else if (-90 < input < 90 && erro > Threshold_Max) {
-        motor.rotateCounterClockwise(PWM);
-    } else if (Threshold_Min < erro < Threshold_Max) {
+void commandMotor(int PWM) {
+    if (PWM == 0)
         motor.stop();
-    }
-}
-//------------------------------------------------------------------------//
-
-int mapeamento(int x, int in_min, int in_max, int out_min, int out_max) {
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    else if (PWM < 0)
+        motor.rotateClockwise(abs(PWM));
+    else
+        motor.rotateCounterClockwise(abs(PWM));
 }
 
 //------------------------------------------------------------------------//
 //Lê os bytes recebidos pela comunicação Master-Slave
-void Erro_Read(int Setpoint, int Input) {
+void adjustLens(int currentPosition, int targetPosition) {
     //Setpoint = 0; //test angle, discomment to work properly
-    Setpoint = constrain(Setpoint, -80, 80);
+    targetPosition = constrain(targetPosition, -80, 80);
 
-    Input = constrain(Input, -80, 80);
+    int output = pid.calculateOutput(currentPosition, targetPosition);
 
-    Erro = Input - Setpoint;
+    // Map da saída do PID para valores de PWM dos motores
+    output = map(output, -55, 55, -255, 255);
 
-    Output = PID_Calculator.PID(abs(Erro), Threshold_Max);
-
-    Output = mapeamento(Output, -216, 216, 110, 230);  //mudar valores para variáveis
-
+    commandMotor(output);
 #ifdef DEBUG_ERRO
     Serial.print(" | Setpoint: ");
-    Serial.printf("%02d", Setpoint);
+    Serial.printf("%02d", targetPosition);
     Serial.print(" | Input: ");
-    Serial.printf("%02d", Input);
-    Serial.print(" | Erro: ");
-    Serial.printf("%02d", Erro);
+    Serial.printf("%02d", currentPosition);
+    Serial.print(" | Output: ");
+    Serial.printf("%03d", output);
 #endif
-
-    Motor_Direction(Erro, Output, Input);
 }
 
 void loop() {
@@ -172,60 +154,60 @@ void loop() {
     Sun_Time.Sun_Range(LONGITUDE, LATITUDE, TIMEZONE);
     double Sun_Setpoint = Sun_Time.Sun_Position(RTC_Data.Second(), RTC_Data.Minute(), RTC_Data.Hour(), RTC_Data.Day(), RTC_Data.Month(), RTC_Data.Year());
 
-    double dt = (double)(micros() - timer) / 1000000;  // Calculate delta time
-    timer = micros();
+    //double dt = (double)(micros() - timer) / 1000000;  // Calculate delta time
+    //timer = micros();
 
     // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
     // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
     // It is then converted from radians to degrees
 
-    double gyroXrate = MPU_Data.GyX / 131.0;  // Convert to deg/s
+    //double gyroXrate = MPU_Data.GyX / 131.0;  // Convert to deg/s
     //double gyroYrate = MPU_Data.GyY / 131.0;  // Convert to deg/s
 
-#ifdef RESTRICT_PITCH
+    // #ifdef RESTRICT_PITCH
+    //     // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
+    //     if ((MPU_Data.roll < -90 && kalAngleX > 90) || (MPU_Data.roll > 90 && kalAngleX < -90)) {
+    //         kalmanX.setAngle(MPU_Data.roll);
+    //         compAngleX = MPU_Data.roll;
+    //         kalAngleX = MPU_Data.roll;
+    //         gyroXangle = MPU_Data.roll;
+    //     } else
+    //         kalAngleX = kalmanX.getAngle(MPU_Data.roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
+
+    //         //if (abs(kalAngleX) > 90)
+    //         //gyroYrate = -gyroYrate;  // Invert rate, so it fits the restriced accelerometer reading
+    //         //kalAngleY = kalmanY.getAngle(MPU_Data.pitch, gyroYrate, dt);
+    // #else
     // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
-    if ((MPU_Data.roll < -90 && kalAngleX > 90) || (MPU_Data.roll > 90 && kalAngleX < -90)) {
-        kalmanX.setAngle(MPU_Data.roll);
-        compAngleX = MPU_Data.roll;
-        kalAngleX = MPU_Data.roll;
-        gyroXangle = MPU_Data.roll;
-    } else
-        kalAngleX = kalmanX.getAngle(MPU_Data.roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
+    // if ((pitch < -90 && kalAngleY > 90) || (pitch > 90 && kalAngleY < -90)) {
+    //     kalmanY.setAngle(pitch);
+    //     compAngleY = pitch;
+    //     kalAngleY = pitch;
+    //     gyroYangle = pitch;
+    // } else
+    //     kalAngleY = kalmanY.getAngle(pitch, gyroYrate, dt);  // Calculate the angle using a Kalman filter
 
-        //if (abs(kalAngleX) > 90)
-        //gyroYrate = -gyroYrate;  // Invert rate, so it fits the restriced accelerometer reading
-        //kalAngleY = kalmanY.getAngle(MPU_Data.pitch, gyroYrate, dt);
-#else
-    // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
-    if ((pitch < -90 && kalAngleY > 90) || (pitch > 90 && kalAngleY < -90)) {
-        kalmanY.setAngle(pitch);
-        compAngleY = pitch;
-        kalAngleY = pitch;
-        gyroYangle = pitch;
-    } else
-        kalAngleY = kalmanY.getAngle(pitch, gyroYrate, dt);  // Calculate the angle using a Kalman filter
+    // if (abs(kalAngleY) > 90)
+    //     gyroXrate = -gyroXrate;                         // Invert rate, so it fits the restriced accelerometer reading
+    // kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
+    // #endif
 
-    if (abs(kalAngleY) > 90)
-        gyroXrate = -gyroXrate;                         // Invert rate, so it fits the restriced accelerometer reading
-    kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
-#endif
+    // gyroXangle += gyroXrate * dt;  // Calculate gyro angle without any filter
+    // //gyroYangle += gyroYrate * dt;
+    // //gyroXangle += kalmanX.getRate() * dt; // Calculate gyro angle using the unbiased rate
+    // //gyroYangle += kalmanY.getRate() * dt;
 
-    gyroXangle += gyroXrate * dt;  // Calculate gyro angle without any filter
-    //gyroYangle += gyroYrate * dt;
-    //gyroXangle += kalmanX.getRate() * dt; // Calculate gyro angle using the unbiased rate
-    //gyroYangle += kalmanY.getRate() * dt;
+    // compAngleX = 0.93 * (compAngleX + gyroXrate * dt) + 0.07 * MPU_Data.roll;  // Calculate the angle using a Complimentary filter
+    // //compAngleY = 0.93 * (compAngleY + gyroYrate * dt) + 0.07 * MPU_Data.pitch;
 
-    compAngleX = 0.93 * (compAngleX + gyroXrate * dt) + 0.07 * MPU_Data.roll;  // Calculate the angle using a Complimentary filter
-    //compAngleY = 0.93 * (compAngleY + gyroYrate * dt) + 0.07 * MPU_Data.pitch;
-
-    if (gyroXangle < -180 || gyroXangle > 180)  // Reset the gyro angle when it has drifted too much
-        gyroXangle = kalAngleX;
-    //if (gyroYangle < -180 || gyroYangle > 180)
-    //gyroYangle = kalAngleY;
+    // if (gyroXangle < -180 || gyroXangle > 180)  // Reset the gyro angle when it has drifted too much
+    //     gyroXangle = kalAngleX;
+    // //if (gyroYangle < -180 || gyroYangle > 180)
+    // //gyroYangle = kalAngleY;
 
     //----------------------------------------------------------------------//
 
-    Erro_Read(Sun_Setpoint, MPU_Data.roll);
+    adjustLens(MPU_Data.roll, Sun_Setpoint);
 
 #ifdef DEBUG
     Serial.println("");
