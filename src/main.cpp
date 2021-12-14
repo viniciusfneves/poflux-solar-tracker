@@ -10,11 +10,11 @@
 #include <MPU/MPU.hpp>
 #include <PID/PID_Controller.hpp>
 #include <motor/motor.hpp>
+#include <TimeController/TimeController.hpp>
 
 //----------------------------RTC settings----------------------------------------//
 
-RtcDS3231<TwoWire> rtc(Wire);              //Criação do objeto do tipo DS3231
-RtcDateTime RTC_Data(__DATE__, __TIME__);  //Criação do objeto do tipo RTCDateTime iniciando com tempo do sistema
+TimeController time_info(0x68);
 
 //----------------------------Kalman settings-------------------------------------//
 
@@ -32,13 +32,6 @@ double compAngleX, compAngleY;  // Calculated angle using a complementary filter
 double kalAngleX, kalAngleY;    // Calculated angle using a Kalman filter
 uint32_t timer;
 
-//----------------------------Timerlord settings-------------------------------------//
-
-float const LONGITUDE = -43.2311486;
-float const LATITUDE = -22.8613427;
-int const TIMEZONE = -3;
-SunLight Sun_Time;
-
 //----------------------------Driver Settings---------------------------------------//
 
 #define LPWM 4     //lpwm
@@ -54,24 +47,26 @@ int Max_Angle_Limit;
 int Min_Angle_Limit;
 
 //----------------------------PID Settings----------------------------//
+
 PID_Controller pid(1, 0.3, 0.4);
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
 void setup() {
-#ifdef DEBUG
-    Serial.begin(115200);
-#endif
+    #ifdef DEBUG
+        Serial.begin(115200);
+    #endif
 
     //----------------------------I2C settings----------------------------------//
     Wire.begin();
     Wire.setClock(400000UL);  // Set I2C frequency to 400kHz (frequency between 10kHz-400kHz)
 
+    //----------------------------RTC Configurations----------------------------//
+
+    time_info.init();
+    
     //----------------------------Motor Configurations----------------------------//
     motor.init();
-
-    //---------------------------------RTC settings-----------------------------//
-    rtc.Begin();                //Inicialização do RTC DS3231
-    rtc.SetDateTime(RTC_Data);  //Configurando valores iniciais do RTC DS3231
 
     //---------------------------------MPU settings-----------------------------//
     mpu.init();             // Configura e inicia o MPU
@@ -91,28 +86,6 @@ void setup() {
 }
 
 //------------------------------------------------------------------------//
-//Atualiza os valores de data e hora instantâneos lidos pelo RTC
-//Imprime no monitor Serial dados do RTC
-void callRTC(RtcDateTime &RTC_Data) {
-    RTC_Data = rtc.GetDateTime();  //Atribuindo valores instantâneos de data e hora à instância data e hora
-
-#ifdef DEBUG_RTC
-    Serial.print(RTC_Data.Day());
-    Serial.print("-");
-    Serial.print(RTC_Data.Month());
-    Serial.print("-");
-    Serial.print(RTC_Data.Year());
-    Serial.print("  ");
-    Serial.print(RTC_Data.Hour());
-    Serial.print(":");
-    Serial.print(RTC_Data.Minute());
-    Serial.print(":");
-    Serial.print(RTC_Data.Second());
-    Serial.print("  ");
-#endif
-}
-
-//------------------------------------------------------------------------//
 
 void commandMotor(int PWM) {
     if (PWM == 0)
@@ -122,10 +95,8 @@ void commandMotor(int PWM) {
     else
         motor.rotateCounterClockwise(abs(PWM));
 }
-
-//------------------------------------------------------------------------//
-//Lê os bytes recebidos pela comunicação Master-Slave
-void adjustLens(int currentPosition, int targetPosition) {
+    
+void adjustLens(int currentPosition, int targetPosition = 0) { //Lê os bytes recebidos pela comunicação Master-Slave
     //Setpoint = 0; //test angle, discomment to work properly
     targetPosition = constrain(targetPosition, -80, 80);
 
@@ -135,79 +106,21 @@ void adjustLens(int currentPosition, int targetPosition) {
     output = map(output, -55, 55, -255, 255);
 
     commandMotor(output);
-#ifdef DEBUG_ERRO
-    Serial.print(" | Setpoint: ");
-    Serial.printf("%02d", targetPosition);
-    Serial.print(" | Input: ");
-    Serial.printf("%02d", currentPosition);
-    Serial.print(" | Output: ");
-    Serial.printf("%03d", output);
-#endif
+    #ifdef DEBUG_ERRO
+        Serial.print(" | Setpoint: ");
+        Serial.printf("%02d", targetPosition);
+        Serial.print(" | Input: ");
+        Serial.printf("%02d", currentPosition);
+        Serial.print(" | Output: ");
+        Serial.printf("%03d", output);
+    #endif
 }
 
 void loop() {
-    callRTC(RTC_Data);      // Atualiza RTC
+
+    adjustLens(MPU_Data.roll, time_info.sun_position()); // Atualiza a hora e retorna a posição do sol (setpoint)
+
     mpu.readMPU(MPU_Data);  // Atualiza MPU
-
-    // Calculating Sun parameters  //
-
-    Sun_Time.Sun_Range(LONGITUDE, LATITUDE, TIMEZONE);
-    double Sun_Setpoint = Sun_Time.Sun_Position(RTC_Data.Second(), RTC_Data.Minute(), RTC_Data.Hour(), RTC_Data.Day(), RTC_Data.Month(), RTC_Data.Year());
-
-    //double dt = (double)(micros() - timer) / 1000000;  // Calculate delta time
-    //timer = micros();
-
-    // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
-    // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
-    // It is then converted from radians to degrees
-
-    //double gyroXrate = MPU_Data.GyX / 131.0;  // Convert to deg/s
-    //double gyroYrate = MPU_Data.GyY / 131.0;  // Convert to deg/s
-
-    // #ifdef RESTRICT_PITCH
-    //     // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
-    //     if ((MPU_Data.roll < -90 && kalAngleX > 90) || (MPU_Data.roll > 90 && kalAngleX < -90)) {
-    //         kalmanX.setAngle(MPU_Data.roll);
-    //         compAngleX = MPU_Data.roll;
-    //         kalAngleX = MPU_Data.roll;
-    //         gyroXangle = MPU_Data.roll;
-    //     } else
-    //         kalAngleX = kalmanX.getAngle(MPU_Data.roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
-
-    //         //if (abs(kalAngleX) > 90)
-    //         //gyroYrate = -gyroYrate;  // Invert rate, so it fits the restriced accelerometer reading
-    //         //kalAngleY = kalmanY.getAngle(MPU_Data.pitch, gyroYrate, dt);
-    // #else
-    // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
-    // if ((pitch < -90 && kalAngleY > 90) || (pitch > 90 && kalAngleY < -90)) {
-    //     kalmanY.setAngle(pitch);
-    //     compAngleY = pitch;
-    //     kalAngleY = pitch;
-    //     gyroYangle = pitch;
-    // } else
-    //     kalAngleY = kalmanY.getAngle(pitch, gyroYrate, dt);  // Calculate the angle using a Kalman filter
-
-    // if (abs(kalAngleY) > 90)
-    //     gyroXrate = -gyroXrate;                         // Invert rate, so it fits the restriced accelerometer reading
-    // kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
-    // #endif
-
-    // gyroXangle += gyroXrate * dt;  // Calculate gyro angle without any filter
-    // //gyroYangle += gyroYrate * dt;
-    // //gyroXangle += kalmanX.getRate() * dt; // Calculate gyro angle using the unbiased rate
-    // //gyroYangle += kalmanY.getRate() * dt;
-
-    // compAngleX = 0.93 * (compAngleX + gyroXrate * dt) + 0.07 * MPU_Data.roll;  // Calculate the angle using a Complimentary filter
-    // //compAngleY = 0.93 * (compAngleY + gyroYrate * dt) + 0.07 * MPU_Data.pitch;
-
-    // if (gyroXangle < -180 || gyroXangle > 180)  // Reset the gyro angle when it has drifted too much
-    //     gyroXangle = kalAngleX;
-    // //if (gyroYangle < -180 || gyroYangle > 180)
-    // //gyroYangle = kalAngleY;
-
-    //----------------------------------------------------------------------//
-
-    adjustLens(MPU_Data.roll, Sun_Setpoint);
 
 #ifdef DEBUG
     Serial.println("");
