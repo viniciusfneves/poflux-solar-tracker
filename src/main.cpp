@@ -1,6 +1,5 @@
 #include <Arduino.h>
-#include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
-#include <PID.h>
+//#include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
 #include <RtcDS3231.h>
 #include <RtcDateTime.h>
 #include <Time.h>
@@ -16,21 +15,10 @@
 RtcDS3231<TwoWire> rtc(Wire);              //Criação do objeto do tipo DS3231
 RtcDateTime RTC_Data(__DATE__, __TIME__);  //Criação do objeto do tipo RTCDateTime iniciando com tempo do sistema
 
-//----------------------------Kalman settings-------------------------------------//
-
-#define RESTRICT_PITCH  // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
-
-Kalman kalmanX;  //Criação de objeto
-Kalman kalmanY;  //Criação de objeto
-
 //----------------------------IMU settings---------------------------------------//
 
 MPUData MPU_Data;
 MPU6050_Solar mpu(0x69);
-double gyroXangle, gyroYangle;
-double compAngleX, compAngleY;  // Calculated angle using a complementary filter
-double kalAngleX, kalAngleY;    // Calculated angle using a Kalman filter
-uint32_t timer;
 
 //----------------------------Timerlord settings-------------------------------------//
 
@@ -46,15 +34,10 @@ SunLight Sun_Time;
 #define ENABLE 19  //pwm enable
 Motor motor(ENABLE, LPWM, RPWM);
 
-//-------------------------------Limits-------------------------------//
-
-int Threshold_Max;
-int Threshold_Min;
-int Max_Angle_Limit;
-int Min_Angle_Limit;
-
 //----------------------------PID Settings----------------------------//
+
 PID_Controller pid(1, 0.3, 0.4);
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
 
 void setup() {
@@ -62,32 +45,23 @@ void setup() {
     Serial.begin(115200);
 #endif
 
-    //----------------------------I2C settings----------------------------------//
+    // I2C settings //
     Wire.begin();
     Wire.setClock(400000UL);  // Set I2C frequency to 400kHz (frequency between 10kHz-400kHz)
 
-    //----------------------------Motor Configurations----------------------------//
+    // Motor Settings//
     motor.init();
 
-    //---------------------------------RTC settings-----------------------------//
+    // RTC settings//
     rtc.Begin();                //Inicialização do RTC DS3231
     rtc.SetDateTime(RTC_Data);  //Configurando valores iniciais do RTC DS3231
+
+    // TimeLord Settings //
+    Sun_Time.Sun_Range(LONGITUDE, LATITUDE, TIMEZONE);
 
     //---------------------------------MPU settings-----------------------------//
     mpu.init();             // Configura e inicia o MPU
     mpu.readMPU(MPU_Data);  // realiza a primeira leitura do MPU para preencher os dados do MPUData
-
-    //---------------------------Kalman----------------------------------//
-    // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
-
-    kalmanX.setAngle(MPU_Data.roll);  // Set starting angle
-    //kalmanY.setAngle(pitch);
-    gyroXangle = MPU_Data.roll;
-    //gyroYangle = pitch;
-    compAngleX = MPU_Data.roll;
-    //compAngleY = pitch;
-
-    timer = micros();
 }
 
 //------------------------------------------------------------------------//
@@ -113,7 +87,8 @@ void callRTC(RtcDateTime &RTC_Data) {
 }
 
 //------------------------------------------------------------------------//
-
+// Comanda o motor de ajuste da lente
+// int PWM -> Potência do motor e sentido de rotação |->[-255,255]
 void commandMotor(int PWM) {
     if (PWM == 0)
         motor.stop();
@@ -124,9 +99,10 @@ void commandMotor(int PWM) {
 }
 
 //------------------------------------------------------------------------//
-//Lê os bytes recebidos pela comunicação Master-Slave
-void adjustLens(int currentPosition, int targetPosition) {
-    //Setpoint = 0; //test angle, discomment to work properly
+// Comanda o ajuste do ângulo da lente
+// int targetPosition -> ângulo desejado da lente
+// int currentePosition [OPTIONAL] -> ângulo atual da lente
+void adjustLens(int targetPosition, int currentPosition = MPU_Data.roll) {
     targetPosition = constrain(targetPosition, -80, 80);
 
     int output = pid.calculateOutput(currentPosition, targetPosition);
@@ -151,63 +127,9 @@ void loop() {
 
     // Calculating Sun parameters  //
 
-    Sun_Time.Sun_Range(LONGITUDE, LATITUDE, TIMEZONE);
     double Sun_Setpoint = Sun_Time.Sun_Position(RTC_Data.Second(), RTC_Data.Minute(), RTC_Data.Hour(), RTC_Data.Day(), RTC_Data.Month(), RTC_Data.Year());
 
-    //double dt = (double)(micros() - timer) / 1000000;  // Calculate delta time
-    //timer = micros();
-
-    // Source: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf eq. 25 and eq. 26
-    // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
-    // It is then converted from radians to degrees
-
-    //double gyroXrate = MPU_Data.GyX / 131.0;  // Convert to deg/s
-    //double gyroYrate = MPU_Data.GyY / 131.0;  // Convert to deg/s
-
-    // #ifdef RESTRICT_PITCH
-    //     // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
-    //     if ((MPU_Data.roll < -90 && kalAngleX > 90) || (MPU_Data.roll > 90 && kalAngleX < -90)) {
-    //         kalmanX.setAngle(MPU_Data.roll);
-    //         compAngleX = MPU_Data.roll;
-    //         kalAngleX = MPU_Data.roll;
-    //         gyroXangle = MPU_Data.roll;
-    //     } else
-    //         kalAngleX = kalmanX.getAngle(MPU_Data.roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
-
-    //         //if (abs(kalAngleX) > 90)
-    //         //gyroYrate = -gyroYrate;  // Invert rate, so it fits the restriced accelerometer reading
-    //         //kalAngleY = kalmanY.getAngle(MPU_Data.pitch, gyroYrate, dt);
-    // #else
-    // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
-    // if ((pitch < -90 && kalAngleY > 90) || (pitch > 90 && kalAngleY < -90)) {
-    //     kalmanY.setAngle(pitch);
-    //     compAngleY = pitch;
-    //     kalAngleY = pitch;
-    //     gyroYangle = pitch;
-    // } else
-    //     kalAngleY = kalmanY.getAngle(pitch, gyroYrate, dt);  // Calculate the angle using a Kalman filter
-
-    // if (abs(kalAngleY) > 90)
-    //     gyroXrate = -gyroXrate;                         // Invert rate, so it fits the restriced accelerometer reading
-    // kalAngleX = kalmanX.getAngle(roll, gyroXrate, dt);  // Calculate the angle using a Kalman filter
-    // #endif
-
-    // gyroXangle += gyroXrate * dt;  // Calculate gyro angle without any filter
-    // //gyroYangle += gyroYrate * dt;
-    // //gyroXangle += kalmanX.getRate() * dt; // Calculate gyro angle using the unbiased rate
-    // //gyroYangle += kalmanY.getRate() * dt;
-
-    // compAngleX = 0.93 * (compAngleX + gyroXrate * dt) + 0.07 * MPU_Data.roll;  // Calculate the angle using a Complimentary filter
-    // //compAngleY = 0.93 * (compAngleY + gyroYrate * dt) + 0.07 * MPU_Data.pitch;
-
-    // if (gyroXangle < -180 || gyroXangle > 180)  // Reset the gyro angle when it has drifted too much
-    //     gyroXangle = kalAngleX;
-    // //if (gyroYangle < -180 || gyroYangle > 180)
-    // //gyroYangle = kalAngleY;
-
-    //----------------------------------------------------------------------//
-
-    adjustLens(MPU_Data.roll, Sun_Setpoint);
+    adjustLens(Sun_Setpoint);
 
 #ifdef DEBUG
     Serial.println("");
