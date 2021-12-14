@@ -1,8 +1,5 @@
 #include <Arduino.h>
 //#include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
-#include <RtcDS3231.h>
-#include <RtcDateTime.h>
-#include <Time.h>
 #include <Wire.h>
 #include <analogWrite.h>
 
