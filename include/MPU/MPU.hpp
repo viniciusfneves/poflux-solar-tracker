@@ -90,8 +90,8 @@ class MPU6050_Solar {
         // Serial.printf("%5.3f", _data.AcZ);
         Serial.print(" | MPU Roll: ");
         Serial.printf("%5.3f", _data.roll);
-        Serial.print(" | MPU Pitch: ");
-        Serial.printf("%5.3f", _data.pitch);
+        // Serial.print(" | MPU Pitch: ");
+        // Serial.printf("%5.3f", _data.pitch);
         // Serial.print(" | Gyro X: ");
         // Serial.printf("%05d", _data.GyX);
         // Serial.print(" | Gyro Y: ");

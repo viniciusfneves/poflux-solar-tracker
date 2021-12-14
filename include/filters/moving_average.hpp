@@ -1,14 +1,10 @@
 #ifndef MOVING_AVERAGE_HPP
 #define MOVING_AVERAGE_HPP
 
-#include <vector>
+#define SAMPLES 25
 
-using std::vector;
-
-class MovingAverage {
-   private:
-    int _numberOfSamples;
-    vector<double> _samples;
+struct MovingAverage {
+    double _samples[SAMPLES];
 
     double sumSamples() {
         double sum = 0;
@@ -19,20 +15,15 @@ class MovingAverage {
     }
 
     void addSample(double newSample) {
-        for (int i = _numberOfSamples; i > 0; i--) {
+        for (int i = SAMPLES - 1; i > 0; i--) {
             _samples[i] = _samples[i - 1];
         }
         _samples[0] = newSample;
     }
 
-   public:
-    MovingAverage(int samples = 10) {
-        _numberOfSamples = samples;
-    };
-
     double filter(double sample) {
-        this->addSample(sample);
-        return this->sumSamples() / _numberOfSamples;
+        addSample(sample);
+        return sumSamples() / SAMPLES;
     }
 };
 
