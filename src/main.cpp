@@ -9,24 +9,24 @@
 #include <filters/moving_average.hpp>
 #include <motor/motor.hpp>
 
-//----------------------------RTC settings//----------------------------//
+//---------------------------- RTC settings ----------------------------//
 
 TimeController time_info(0x68);
 
-//----------------------------IMU settings----------------------------//
+//---------------------------- IMU settings ----------------------------//
 
 MPUData MPU_Data;
 MPU6050_Solar mpu(0x69);
 MovingAverage average;
 
-//----------------------------Driver Settings----------------------------//
+//---------------------------- Driver Settings ----------------------------//
 
 #define LPWM 4     //lpwm
 #define RPWM 2     //rpwm
 #define ENABLE 19  //pwm enable
 Motor motor(ENABLE, LPWM, RPWM);
 
-//----------------------------PID Settings----------------------------//
+//---------------------------- PID Settings ----------------------------//
 
 PID_Controller pid(1, 0.3, 0.4);
 
@@ -37,15 +37,16 @@ void setup() {
     Serial.begin(115200);
 #endif
 
-    // I2C settings //
+    //-------- I2C --------//
     Wire.begin();
-    Wire.setClock(400000UL);  // Set I2C frequency to 400kHz (frequency between 10kHz-400kHz)
+    Wire.setClock(400000U);  // Set I2C frequency to 400kHz (frequency between 10kHz-400kHz)
 
-    // ------------------------------- Sensor Config ------------------------------ //
+    //-------- Sensors --------//
     time_info.init();
     motor.init();
-    mpu.init();             // Configura e inicia o MPU
-    mpu.readMPU(MPU_Data);  // realiza a primeira leitura do MPU para preencher os dados do MPUData
+    mpu.init();                              // Configura e inicia o MPU
+    mpu.readMPU(MPU_Data);                   // realiza a primeira leitura do MPU para preencher os dados do MPUData
+    average.setInitialValue(MPU_Data.roll);  // Seta o valor inicial no filtro de mediaMovel
 }
 
 // Aciona o driver de motor
@@ -62,13 +63,10 @@ void commandMotor(int PWM) {
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPTIONAL] -> ângulo atual da lente
 void adjustLens(int targetPosition, int currentPosition = average.filter(MPU_Data.roll)) {
-    //targetPosition = 48; usada para testes, somente
-    targetPosition = constrain(targetPosition, -80, 80);
+    targetPosition = constrain(targetPosition, -82, 82);
+    currentPosition = constrain(currentPosition, -85, 85);
 
     int output = pid.calculateOutput(currentPosition, targetPosition);
-
-    // Map da saída do PID para valores de PWM dos motores
-    output = map(output, -55, 55, -255, 255);
 
     commandMotor(output);
 #ifdef DEBUG_ERRO
@@ -76,8 +74,6 @@ void adjustLens(int targetPosition, int currentPosition = average.filter(MPU_Dat
     Serial.printf("%02d", targetPosition);
     Serial.print(" | Input: ");
     Serial.printf("%02d", currentPosition);
-    Serial.print(" | Output: ");
-    Serial.printf("%03d", output);
 #endif
 }
 

@@ -3,10 +3,11 @@
 
 #define SAMPLES 25
 
-struct MovingAverage {
+class MovingAverage {
+   private:
     double _samples[SAMPLES];
 
-    double sumSamples() {
+    double _sumSamples() {
         double sum = 0;
         for (int x : _samples) {
             sum += x;
@@ -14,16 +15,23 @@ struct MovingAverage {
         return sum;
     }
 
-    void addSample(double newSample) {
+    void _addSample(double newSample) {
         for (int i = SAMPLES - 1; i > 0; i--) {
             _samples[i] = _samples[i - 1];
         }
         _samples[0] = newSample;
     }
 
+   public:
     double filter(double sample) {
-        addSample(sample);
-        return sumSamples() / SAMPLES;
+        _addSample(sample);
+        return _sumSamples() / SAMPLES;
+    }
+
+    void setInitialValue(double value) {
+        for (int i = 0; i < SAMPLES; i++) {
+            _samples[i] = value;
+        }
     }
 };
 
