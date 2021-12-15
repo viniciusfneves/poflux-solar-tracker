@@ -12,8 +12,8 @@ class TimeController {
    private:
     int _RTCAddress;
 
-    int _Longitude = -43.2311486;  //Configurado para Rio de Janeiro
-    int _Latitude = -22.8613427;
+    double _Longitude = -43.2311486;  //Configurado para Rio de Janeiro
+    double _Latitude = -22.8613427;
     int _Timezone = -3;
 
     double Day_Current_Time;
@@ -51,10 +51,11 @@ class TimeController {
 #endif
     }
 
-    int sun_position() {
-#ifndef TEST_SETPOINT_0
-
-        byte today[] = {DateTime.Second(), DateTime.Minute(), DateTime.Hour(), DateTime.Day(), DateTime.Month(), DateTime.Year()};
+    int sunPosition() {
+#ifdef TEST_SETPOINT_0
+        return 0;
+#endif
+        byte today[] = {DateTime.Second(), DateTime.Minute(), DateTime.Hour(), DateTime.Day(), DateTime.Month(), static_cast<byte>(DateTime.Year())};
 
         Day_Current_Time = (double)DateTime.Hour() * 3600 + (double)DateTime.Minute() * 60 + (double)DateTime.Second();  //Hora atual em segundos
 
@@ -64,11 +65,5 @@ class TimeController {
             Day_Sun_Set = (double)today[tl_hour] * 3600 + (double)today[tl_minute] * 60;  //converte para segundos
 
         return (map(Day_Current_Time, Day_Sun_Rise, Day_Sun_Set, 90.0, -90.0));  //Setpoint: conversão do horário atual em segundos para o equivalente em graus dados os extremos do ciclo solar variáveis e os extremos de angulação do sensor
-
-#else
-
-        return 0;
-
-#endif
     }
 };

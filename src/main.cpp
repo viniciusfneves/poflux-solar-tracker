@@ -81,7 +81,7 @@ void loop() {
     time_info.CallRTC();
     mpu.readMPU(MPU_Data);
 
-    adjustLens(time_info.sun_position());  // Atualiza a hora e retorna a posição do sol (setpoint)
+    adjustLens(time_info.sunPosition());
 
 #ifdef DEBUG
     Serial.println("");
