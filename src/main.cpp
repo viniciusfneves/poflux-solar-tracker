@@ -69,12 +69,6 @@ void adjustLens(int targetPosition, int currentPosition = average.filter(MPU_Dat
     int output = pid.calculateOutput(currentPosition, targetPosition);
 
     commandMotor(output);
-#ifdef DEBUG_ERRO
-    Serial.print(" | Setpoint: ");
-    Serial.printf("%02d", targetPosition);
-    Serial.print(" | Input: ");
-    Serial.printf("%02d", currentPosition);
-#endif
 }
 
 void loop() {

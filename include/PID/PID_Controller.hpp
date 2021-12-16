@@ -3,41 +3,42 @@
 
 #include <Arduino.h>
 
+#define TIME_T0_STABILIZE 350  // ms
+
 class PID_Controller {
    private:
     double _kp, _ki, _kd;
-    double _lastError = 0.;
-    double _lastIntegrativeValue = 0.;
-    long _lastRun;
     int _outputLimit;
     int _integrativeLimit;
     double _threshold;
-    int _stabilityCounter = 0;
+    double _lastError = 0.;
+    double _lastIntegrativeValue = 0.;
+    unsigned long _lastRun = 0;
+    unsigned long _lastUnstableTimestamp = 0;
 
    public:
-    PID_Controller(double kp, double ki, double kd, double threshold = 1.7, int outputLimit = 255, int integrativeLimit = 35) {
+    // O limite integrativo controlado pela variável integrativeLimit deve ser passado em porcentagem
+    // Esse valor definirá qual porcentagem máxima de participação no output do controlador a constrante integrativa terá
+    PID_Controller(double kp, double ki, double kd, double threshold = 1.7, int integrativeLimitPercentage = 68) {
         _kp = kp;
         _ki = ki;
         _kd = kd;
         _threshold = threshold;
-        _outputLimit = outputLimit;
-        _integrativeLimit = integrativeLimit;
+        _outputLimit = 45 * (_kp + _ki * integrativeLimitPercentage);
+        _integrativeLimit = _outputLimit * integrativeLimitPercentage / 100;
     }
 
-    int calculateOutput(double error, double target = 0, unsigned long time = millis()) {
-        error -= target;
+    int calculateOutput(double actualState, double target = 0, unsigned long time = millis()) {
+        double error = actualState - target;
 
         if (abs(error) < _threshold) {
-            _stabilityCounter++;
-            if (_stabilityCounter > 250) {
+            if (_lastUnstableTimestamp + TIME_T0_STABILIZE > time)
                 this->reset();
-                _stabilityCounter = 0;  // Caso um RESET na constante integrativa seja necessário, descomentar
-            }
+
             _lastRun = time;
             _lastError = 0.;
             return 0;
         }
-        _stabilityCounter = 0;
 
         int dt = time - _lastRun;
         double P = _kp * error;
@@ -46,20 +47,30 @@ class PID_Controller {
         I = constrain(I, -_integrativeLimit, _integrativeLimit);
         //error = (KFE * error) + ((1 - KFE) * lastError);  //Filtra a variacao do erro para a derivada
 
+        _lastUnstableTimestamp = time;
         _lastRun = time;
         _lastIntegrativeValue = I;
         _lastError = error;
 
         int output = static_cast<int>(P + I + D);
+        output = constrain(output, -_outputLimit, _outputLimit);
+        output = map(output, -_outputLimit, _outputLimit, -255, 255);
+
 #ifdef DEBUG_PID
+        Serial.print(" | Input: ");
+        Serial.printf("%02.1f", actualState);
+        Serial.print(" | Setpoint: ");
+        Serial.printf("%02.1f", target);
         Serial.print(" | P: ");
-        Serial.printf("%5.3f", P);
+        Serial.printf("%.3f", P);
         Serial.print(" | I: ");
-        Serial.printf("%5.3f", I);
+        Serial.printf("%.3f", I);
         Serial.print(" | D: ");
-        Serial.printf("%5.3f", D);
+        Serial.printf("%.3f", D);
+        Serial.print(" | OUTPUT: ");
+        Serial.printf("%03d", output);
 #endif
-        return constrain(output, -_outputLimit, _outputLimit);
+        return output;
     }
 
     void reset() {
