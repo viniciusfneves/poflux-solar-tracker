@@ -12,7 +12,7 @@ struct MPUData {
 
 class MPU6050_Solar {
    private:
-    int _MPUAddress;
+    int _mpuAddress;
     int _mpuErrorCounter = 0;
     const unsigned int _RAW_TO_G = 16384;
     const double _RAW_TO_RAD_PER_SECOND = 131 * 0.01745;
@@ -48,14 +48,14 @@ class MPU6050_Solar {
 
    public:
     MPU6050_Solar(int MPUAddress) {
-        _MPUAddress = MPUAddress;
+        _mpuAddress = MPUAddress;
     }
 
     void init() {
         // --    Configura o MPU    -- //
         // -- Configuração do Gyro -- //
         try {
-            Wire.beginTransmission(_MPUAddress);
+            Wire.beginTransmission(_mpuAddress);
             Wire.write(0x1B);  // Registro de configuração do Gyro
             Wire.write(0x00);  // Configura o Full Scale Range para + ou - 250 graus por segundo
             byte response = Wire.endTransmission();
@@ -63,7 +63,7 @@ class MPU6050_Solar {
                 throw(response);
 
             // -- Configuração do Acelerômetro -- //
-            Wire.beginTransmission(_MPUAddress);
+            Wire.beginTransmission(_mpuAddress);
             Wire.write(0x1C);  // Registro de configuração do Gyro
             Wire.write(0x00);  // Configura o Full Scale Range para + ou - 2g graus por segundo
             response = Wire.endTransmission();
@@ -71,7 +71,7 @@ class MPU6050_Solar {
                 throw(response);
 
             // Ativa o MPU
-            Wire.beginTransmission(_MPUAddress);
+            Wire.beginTransmission(_mpuAddress);
             Wire.write(0x6B);  // Registro PWR_MGMT_1
             Wire.write(0);     // definido como zero (ativa o MPU-6050)
             response = Wire.endTransmission();
@@ -94,14 +94,14 @@ class MPU6050_Solar {
 
     void readMPU(MPUData& _data) {
         try {
-            Wire.beginTransmission(_MPUAddress);
+            Wire.beginTransmission(_mpuAddress);
             Wire.write(0x3B);  // Começa a leitura abaixo no endereço do registrador 0x3B (ACCEL_XOUT_H)
             byte response = Wire.endTransmission();
             if (response != 0)
                 throw(response);
 
             //Solicita os dados do sensor
-            byte responseLenght = Wire.requestFrom(_MPUAddress, 14);
+            byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
             if (responseLenght == 14)
                 _mpuErrorCounter = 0;
 
@@ -147,7 +147,7 @@ class MPU6050_Solar {
             // Serial.print(" | Z Gs: ");
             // Serial.printf("%5.3f", _data.AcZ);
             Serial.print(" | MPU Roll: ");
-            Serial.printf("%5.3f", _data.roll);
+            Serial.printf("%03.2f", _data.roll);
             // Serial.print(" | MPU Pitch: ");
             // Serial.printf("%5.3f", _data.pitch);
 #endif
