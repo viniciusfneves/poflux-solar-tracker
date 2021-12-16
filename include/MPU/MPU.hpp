@@ -86,10 +86,12 @@ class MPU6050_Solar {
                 Serial.print(".");
             }
             Serial.print("\nReiniciando aplicação!");
+            Wire.flush();
+            Wire.~TwoWire();
             ESP.restart();
         }
-        // Aguarda o MPU estabilizar a leitura
-        delay(500);
+
+        delay(500);  // Aguarda o MPU estabilizar a leitura
     }
 
     void readMPU(MPUData& _data) {
@@ -130,9 +132,7 @@ class MPU6050_Solar {
             if (_data.AcY > 2) {
                 _data.AcY -= 4;
                 _data.roll = RAD_TO_DEG * (atan2(-_data.AcZ, _data.AcY) + PI / 2);
-            }
-
-            else
+            } else
                 _data.roll = RAD_TO_DEG * (atan2(-_data.AcZ, _data.AcY) + PI / 2);
 
                 //_data.pitch = RAD_TO_DEG * (atan2(-_data.AcZ, _data.AcX) + PI / 2);
@@ -155,6 +155,8 @@ class MPU6050_Solar {
             // Caso já tenham havido 200 tentativas consecutivas de leitura sem sucesso: tenta reiniciar o ESP
             if (_mpuErrorCounter >= 200) {
                 Serial.print("\n//---- FALHA NA LEITURA DO MPU ----//");
+                Wire.flush();
+                Wire.~TwoWire();
                 ESP.restart();
             }
             _mpuErrorCounter++;
