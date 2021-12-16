@@ -59,6 +59,8 @@ class Motor {
         //-- DEBUG --//
 #ifdef DEBUG_MOTOR
         Serial.print(" | Motor: Parado");
+        Serial.print(" | PWM: ");
+        Serial.printf("%03d", 0);
 #endif
     }
 };
