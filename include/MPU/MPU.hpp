@@ -19,7 +19,7 @@ class MPU6050_Solar {
     const int _RAW_TO_DEGREES_PER_SECOND = 131;
     const int _RAW_TO_CELSIUS = 340;
 
-    void _debugI2CResponse(byte errorCode) {
+    void _debugI2CResponse(const byte errorCode) {
         Serial.print(" | ");
         switch (errorCode) {
             case 0:
@@ -78,7 +78,7 @@ class MPU6050_Solar {
             if (response != 0)
                 throw(response);
 
-        } catch (byte e) {
+        } catch (const byte e) {
             const int secondsToRestart = 5;
             Serial.printf("\n\n\nMPU não pôde ser encontrado ou calibrado corretamente. Tentando reiniciar em %d segundos\n", secondsToRestart);
             for (int cont = 0; cont < secondsToRestart * 2; cont++) {
@@ -151,17 +151,27 @@ class MPU6050_Solar {
             // Serial.print(" | MPU Pitch: ");
             // Serial.printf("%5.3f", _data.pitch);
 #endif
-        } catch (byte e) {
+        } catch (const byte e) {
             // Caso já tenham havido 200 tentativas consecutivas de leitura sem sucesso: tenta reiniciar o ESP
             if (_mpuErrorCounter >= 200) {
                 Serial.print("\n//---- FALHA NA LEITURA DO MPU ----//");
-                Wire.flush();
                 Wire.~TwoWire();
                 ESP.restart();
             }
             _mpuErrorCounter++;
             _debugI2CResponse(e);
             delay(50);  // Esse delay é necessário, caso contrário o BUS I2C do ESP crasha com a excessão
+            Wire.flush();
+        } catch (const char* e) {
+            if (_mpuErrorCounter >= 200) {
+                Serial.println("\n//---- FALHA NA LEITURA DO MPU ----//");
+                Wire.~TwoWire();
+                ESP.restart();
+            }
+            _mpuErrorCounter++;
+            Serial.print(e);
+            delay(50);
+            Wire.flush();
         }
     }
 };
