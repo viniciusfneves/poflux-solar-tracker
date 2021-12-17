@@ -3,6 +3,10 @@
 
 #include <Arduino.h>
 
+#define MIN_OUTPUT_PWM 180
+#define MAX_OUTPUT_PWM 255
+#define pwmMap(value) map(value, 1, 255, MIN_OUTPUT_PWM, MAX_OUTPUT_PWM)
+
 class Motor {
    private:
     int _enable, _lpwm, _rpwm;
@@ -24,7 +28,7 @@ class Motor {
     }
 
     void rotateClockwise(int PWM) {
-        PWM = map(PWM, 1, 255, 180, 255);
+        PWM = pwmMap(PWM);
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
@@ -38,7 +42,7 @@ class Motor {
     }
 
     void rotateCounterClockwise(int PWM) {
-        PWM = map(PWM, 1, 255, 180, 255);
+        PWM = pwmMap(PWM);
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
