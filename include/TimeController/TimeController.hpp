@@ -3,50 +3,50 @@
 #include <TimeLord.h>  //Biblioteca que indica posição do Sol. Pode ser removida e substituida por algo mais simples?
 #include <Wire.h>      //Biblioteca para manipulação do protocolo I2C
 
-RtcDateTime DateTime(__DATE__, __TIME__);  //Criação do objeto do tipo RTCDateTime iniciando com tempo do sistema
-RtcDS3231<TwoWire> RTC(Wire);              //Criação do objeto do tipo DS3231
+RtcDateTime dateTime(__DATE__, __TIME__);  //Criação do objeto do tipo RTCDateTime iniciando com tempo do sistema
+RtcDS3231<TwoWire> rtc(Wire);              //Criação do objeto do tipo DS3231
 
-TimeLord Lord;
+TimeLord lord;
 
 class TimeController {
    private:
-    int _RTCAddress;
+    int _rtcAddress;
 
-    double _Longitude = -43.2311486;  //Configurado para Rio de Janeiro
-    double _Latitude = -22.8613427;
-    int _Timezone = -3;
+    double _longitude = -43.2311486;  //Configurado para Rio de Janeiro
+    double _latitude = -22.8613427;
+    int _timezone = -3;
 
-    double Day_Current_Time;
-    double Day_Sun_Rise;
-    double Day_Sun_Set;
+    double _dayCurrentTime;
+    double _daySunRise;
+    double _daySunSet;
 
    public:
     TimeController(int RTCAddress = 0x68) {
-        _RTCAddress = RTCAddress;  //Sem uso - recebe endereço do RTC
+        _rtcAddress = RTCAddress;
     }
 
     void init() {
-        RTC.Begin();                           //Inicialização do RTC DS3231
-        RTC.SetDateTime(DateTime);             //Configurando valores iniciais do RTC DS3231
-        Lord.TimeZone(_Timezone * 60);         //Envio de informações para TimeLord
-        Lord.Position(_Latitude, _Longitude);  //
+        rtc.Begin();                           //Inicialização do RTC DS3231
+        rtc.SetDateTime(dateTime);             //Configurando valores iniciais do RTC DS3231
+        lord.TimeZone(_timezone * 60);         //Envio de informações para TimeLord
+        lord.Position(_latitude, _longitude);  //
     }
 
-    void CallRTC() {
-        DateTime = RTC.GetDateTime();  // Atualiza o horário
+    void callRTC() {
+        dateTime = rtc.GetDateTime();  // Atualiza o horário
 
 #ifdef DEBUG_RTC  //Printa data e hora na tela
-        Serial.print(DateTime.Day());
+        Serial.print(dateTime.Day());
         Serial.print("/");
-        Serial.print(DateTime.Month());
+        Serial.print(dateTime.Month());
         Serial.print("/");
-        Serial.print(DateTime.Year());
+        Serial.print(dateTime.Year());
         Serial.print("  ");
-        Serial.print(DateTime.Hour());
+        Serial.print(dateTime.Hour());
         Serial.print(":");
-        Serial.print(DateTime.Minute());
+        Serial.print(dateTime.Minute());
         Serial.print(":");
-        Serial.print(DateTime.Second());
+        Serial.print(dateTime.Second());
         Serial.print("  ");
 #endif
     }
@@ -54,16 +54,17 @@ class TimeController {
     int sunPosition() {
 #ifdef TEST_SETPOINT_0
         return 0;
+#else
+        byte today[] = {dateTime.Second(), dateTime.Minute(), dateTime.Hour(), dateTime.Day(), dateTime.Month(), static_cast<byte>(dateTime.Year())};
+
+        _dayCurrentTime = (double)dateTime.Hour() * 3600 + (double)dateTime.Minute() * 60 + (double)dateTime.Second();  //Hora atual em segundos
+
+        if (lord.SunRise(today))
+            _daySunRise = (double)today[tl_hour] * 3600 + (double)today[tl_minute] * 60;  //converte para segundos
+        if (lord.SunSet(today))
+            _daySunSet = (double)today[tl_hour] * 3600 + (double)today[tl_minute] * 60;  //converte para segundos
+
+        return (map(_dayCurrentTime, _daySunRise, _daySunSet, 90.0, -90.0));  //Setpoint: conversão do horário atual em segundos para o equivalente em graus dados os extremos do ciclo solar variáveis e os extremos de angulação do sensor
 #endif
-        byte today[] = {DateTime.Second(), DateTime.Minute(), DateTime.Hour(), DateTime.Day(), DateTime.Month(), static_cast<byte>(DateTime.Year())};
-
-        Day_Current_Time = (double)DateTime.Hour() * 3600 + (double)DateTime.Minute() * 60 + (double)DateTime.Second();  //Hora atual em segundos
-
-        if (Lord.SunRise(today))
-            Day_Sun_Rise = (double)today[tl_hour] * 3600 + (double)today[tl_minute] * 60;  //converte para segundos
-        if (Lord.SunSet(today))
-            Day_Sun_Set = (double)today[tl_hour] * 3600 + (double)today[tl_minute] * 60;  //converte para segundos
-
-        return (map(Day_Current_Time, Day_Sun_Rise, Day_Sun_Set, 90.0, -90.0));  //Setpoint: conversão do horário atual em segundos para o equivalente em graus dados os extremos do ciclo solar variáveis e os extremos de angulação do sensor
     }
 };

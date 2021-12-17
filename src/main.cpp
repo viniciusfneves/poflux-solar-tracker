@@ -11,11 +11,11 @@
 
 //---------------------------- RTC settings ----------------------------//
 
-TimeController time_info(0x68);
+TimeController timeInfo(0x68);
 
 //---------------------------- IMU settings ----------------------------//
 
-MPUData MPU_Data;
+MPUData mpuData;
 MPU6050_Solar mpu(0x69);
 MovingAverage average;
 
@@ -42,11 +42,11 @@ void setup() {
     Wire.setClock(400000U);  // Set I2C frequency to 400kHz (frequency between 10kHz-400kHz)
 
     //-------- Sensors --------//
-    time_info.init();
+    timeInfo.init();
     motor.init();
-    mpu.init();                              // Configura e inicia o MPU
-    mpu.readMPU(MPU_Data);                   // realiza a primeira leitura do MPU para preencher os dados do MPUData
-    average.setInitialValue(MPU_Data.roll);  // Seta o valor inicial no filtro de mediaMovel
+    mpu.init();                             // Configura e inicia o MPU
+    mpu.readMPU(mpuData);                   // realiza a primeira leitura do MPU para preencher os dados do MPUData
+    average.setInitialValue(mpuData.roll);  // Seta o valor inicial no filtro de mediaMovel
 }
 
 // Aciona o driver de motor
@@ -62,7 +62,7 @@ void commandMotor(int PWM) {
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPTIONAL] -> ângulo atual da lente
-void adjustLens(int targetPosition, int currentPosition = average.filter(MPU_Data.roll)) {
+void adjustLens(int targetPosition, int currentPosition = average.filter(mpuData.roll)) {
     targetPosition = constrain(targetPosition, -82, 82);
     currentPosition = constrain(currentPosition, -85, 85);
 
@@ -72,11 +72,11 @@ void adjustLens(int targetPosition, int currentPosition = average.filter(MPU_Dat
 }
 
 void loop() {
-    time_info.CallRTC();
-    mpu.readMPU(MPU_Data);
+    timeInfo.callRTC();
+    mpu.readMPU(mpuData);
 
-    if (MPU_Data.isTrusted)
-        adjustLens(time_info.sunPosition());
+    if (mpuData.isTrusted)
+        adjustLens(timeInfo.sunPosition());
     else
         motor.stop();
 
