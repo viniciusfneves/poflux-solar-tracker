@@ -8,6 +8,7 @@
 struct MPUData {
     double AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
     double roll, pitch, yaw;
+    bool isTrusted = false;
 };
 
 class MPU6050_Solar {
@@ -104,9 +105,12 @@ class MPU6050_Solar {
 
             //Solicita os dados do sensor
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
-            if (responseLenght == 14)
+            if (responseLenght == 14) {
                 _mpuErrorCounter = 0;
-
+                _data.isTrusted = true;
+            } else {
+                throw "MPU ERROR > Número de bytes recebidos é diferente do número de bytes requisitados";
+            }
             //Armazena o valore cru dos registradores do sensor nas variaveis correspondentes
             _data.AcX = Wire.read() << 8 | Wire.read();  //0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
             _data.AcY = Wire.read() << 8 | Wire.read();  //0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
@@ -159,6 +163,7 @@ class MPU6050_Solar {
                 ESP.restart();
             }
             _mpuErrorCounter++;
+            _data.isTrusted = false;
             _debugI2CResponse(e);
             delay(50);  // Esse delay é necessário, caso contrário o BUS I2C do ESP crasha com a excessão
             Wire.flush();
@@ -169,6 +174,7 @@ class MPU6050_Solar {
                 ESP.restart();
             }
             _mpuErrorCounter++;
+            _data.isTrusted = false;
             Serial.print(e);
             delay(50);
             Wire.flush();

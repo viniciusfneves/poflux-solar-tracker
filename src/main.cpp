@@ -75,7 +75,10 @@ void loop() {
     time_info.CallRTC();
     mpu.readMPU(MPU_Data);
 
-    adjustLens(time_info.sunPosition());
+    if (MPU_Data.isTrusted)
+        adjustLens(time_info.sunPosition());
+    else
+        motor.stop();
 
 #ifdef DEBUG
     Serial.println("");
