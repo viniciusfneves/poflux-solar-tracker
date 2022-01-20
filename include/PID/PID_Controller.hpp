@@ -53,7 +53,9 @@ class PID_Controller {
                 this->reset();
 
             double D = _kd * -_lastError / dt;
+#ifdef DEBUG_PID
             _debugPrints(actualState, target, 0., _lastIntegrativeValue, D, 0);
+#endif
             _lastRun = time;
             _lastError = 0.;
             return 0;

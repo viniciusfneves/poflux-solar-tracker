@@ -17,7 +17,7 @@ TimeController timeInfo(0x68);
 
 MPUData mpuData;
 MPU6050_Solar mpu(0x69);
-MovingAverage average;
+MovingAverage filter;
 
 //---------------------------- Driver Settings ----------------------------//
 
@@ -39,14 +39,13 @@ void setup() {
 
     //-------- I2C --------//
     Wire.begin();
-    Wire.setClock(400000U);  // Set I2C frequency to 400kHz (frequency between 10kHz-400kHz)
 
     //-------- Sensors --------//
     timeInfo.init();
     motor.init();
-    mpu.init();                             // Configura e inicia o MPU
-    mpu.readMPU(mpuData);                   // realiza a primeira leitura do MPU para preencher os dados do MPUData
-    average.setInitialValue(mpuData.roll);  // Seta o valor inicial no filtro de mediaMovel
+    mpu.init();                            // Configura e inicia o MPU
+    mpu.readMPU(mpuData);                  // realiza a primeira leitura do MPU para preencher os dados do MPUData
+    filter.setInitialValue(mpuData.roll);  // Seta o valor inicial no filtro de média movel
 }
 
 // Aciona o driver de motor
@@ -62,8 +61,12 @@ void commandMotor(int PWM) {
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPTIONAL] -> ângulo atual da lente
-void adjustLens(int targetPosition, int currentPosition = average.filter(mpuData.roll)) {
+void adjustLens(int targetPosition, int currentPosition = filter.getAverage(mpuData.roll)) {
+#ifdef TEST_SETPOINT
+    targetPosition = SETPOINT;
+#else
     targetPosition = constrain(targetPosition, -82, 82);
+#endif
     currentPosition = constrain(currentPosition, -85, 85);
 
     int output = pid.calculateOutput(currentPosition, targetPosition);

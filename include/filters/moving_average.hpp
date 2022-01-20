@@ -23,7 +23,7 @@ class MovingAverage {
     }
 
    public:
-    double filter(double sample) {
+    double getAverage(double sample) {
         _addSample(sample);
         return _sumSamples() / SAMPLES;
     }

@@ -52,9 +52,6 @@ class TimeController {
     }
 
     int sunPosition() {
-#ifdef TEST_SETPOINT_0
-        return 0;
-#else
         byte today[] = {dateTime.Second(), dateTime.Minute(), dateTime.Hour(), dateTime.Day(), dateTime.Month(), static_cast<byte>(dateTime.Year())};
 
         _dayCurrentTime = (double)dateTime.Hour() * 3600 + (double)dateTime.Minute() * 60 + (double)dateTime.Second();  //Hora atual em segundos
@@ -65,6 +62,5 @@ class TimeController {
             _daySunSet = (double)today[tl_hour] * 3600 + (double)today[tl_minute] * 60;  //converte para segundos
 
         return (map(_dayCurrentTime, _daySunRise, _daySunSet, 90.0, -90.0));  //Setpoint: conversão do horário atual em segundos para o equivalente em graus dados os extremos do ciclo solar variáveis e os extremos de angulação do sensor
-#endif
     }
 };
