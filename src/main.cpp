@@ -1,13 +1,20 @@
 #include <Arduino.h>
 //#include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
+#include <WiFi.h>
 #include <Wire.h>
 #include <analogWrite.h>
 
+#include <HTTPServer/http_server.hpp>
 #include <MPU/MPU.hpp>
 #include <PID/PID_Controller.hpp>
 #include <TimeController/TimeController.hpp>
 #include <filters/moving_average.hpp>
 #include <motor/motor.hpp>
+
+//---------------------------- WIFi ----------------------------//
+
+#define SSID "rede"
+#define PASSWORD "senha"
 
 //---------------------------- RTC settings ----------------------------//
 
@@ -36,7 +43,11 @@ void setup() {
 #ifdef DEBUG
     Serial.begin(115200);
 #endif
+    //---------WIFI---------//
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, PASSWORD);
 
+    initHTTPServer();
     //-------- I2C --------//
     Wire.begin();
 
