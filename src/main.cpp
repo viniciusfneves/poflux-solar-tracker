@@ -1,5 +1,5 @@
 #include <Arduino.h>
-//#include <Kalman.h>  // Source: https://github.com/TKJElectronics/KalmanFilter
+#include <ESPmDNS.h>
 #include <WiFi.h>
 #include <Wire.h>
 #include <analogWrite.h>
@@ -48,6 +48,9 @@ void setup() {
     WiFi.begin(SSID, PASSWORD);
 
     initHTTPServer();
+
+    MDNS.begin("lif");
+
     //-------- I2C --------//
     Wire.begin();
 
