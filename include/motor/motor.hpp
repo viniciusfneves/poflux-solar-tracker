@@ -11,6 +11,25 @@ class Motor {
    private:
     int _enable, _lpwm, _rpwm;
 
+    void rotateClockwise(int PWM) {
+        PWM = pwmMap(PWM);
+        analogWrite(_enable, PWM);
+        digitalWrite(_lpwm, HIGH);
+        digitalWrite(_rpwm, LOW);
+    }
+
+    void rotateCounterClockwise(int PWM) {
+        PWM = pwmMap(PWM);
+        analogWrite(_enable, PWM);
+        digitalWrite(_lpwm, LOW);
+        digitalWrite(_rpwm, HIGH);
+    }
+    void stop() {
+        digitalWrite(_enable, LOW);
+        digitalWrite(_lpwm, LOW);
+        digitalWrite(_rpwm, LOW);
+    }
+
    public:
     Motor(int enable_pin, int lpwm_pin, int rpwm_pin) {
         _enable = enable_pin;
@@ -27,44 +46,25 @@ class Motor {
         digitalWrite(_rpwm, LOW);
     }
 
-    void rotateClockwise(int PWM) {
-        PWM = pwmMap(PWM);
-        analogWrite(_enable, PWM);
-        digitalWrite(_lpwm, HIGH);
-        digitalWrite(_rpwm, LOW);
-
-        //-- DEBUG --//
+    // Aciona o driver de motor
+    void commandMotor(int PWM) {
+        if (PWM == 0) {
+            stop();
+#ifdef DEBUG_MOTOR
+            Serial.print(" | Motor: Parado");
+#endif
+        } else if (PWM < 0)
+            rotateClockwise(abs(PWM));
 #ifdef DEBUG_MOTOR
         Serial.print(" | Motor: Horário");
         Serial.print(" | PWM: ");
         Serial.printf("%03d", PWM);
 #endif
-    }
-
-    void rotateCounterClockwise(int PWM) {
-        PWM = pwmMap(PWM);
-        analogWrite(_enable, PWM);
-        digitalWrite(_lpwm, LOW);
-        digitalWrite(_rpwm, HIGH);
-
-        //-- DEBUG --//
+        else rotateCounterClockwise(abs(PWM));
 #ifdef DEBUG_MOTOR
         Serial.print(" | Motor: Anti-Horário");
         Serial.print(" | PWM: ");
         Serial.printf("%03d", PWM);
-#endif
-    }
-
-    void stop() {
-        digitalWrite(_enable, LOW);
-        digitalWrite(_lpwm, LOW);
-        digitalWrite(_rpwm, LOW);
-
-        //-- DEBUG --//
-#ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Parado");
-        Serial.print(" | PWM: ");
-        Serial.printf("%03d", 0);
 #endif
     }
 };

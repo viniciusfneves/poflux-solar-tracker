@@ -59,16 +59,6 @@ void setup() {
     filter.setInitialValue(mpuData.roll);  // Seta o valor inicial no filtro de média movel
 }
 
-// Aciona o driver de motor
-void commandMotor(int PWM) {
-    if (PWM == 0)
-        motor.stop();
-    else if (PWM < 0)
-        motor.rotateClockwise(abs(PWM));
-    else
-        motor.rotateCounterClockwise(abs(PWM));
-}
-
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPTIONAL] -> ângulo atual da lente
@@ -82,7 +72,7 @@ void adjustLens(int targetPosition, int currentPosition = filter.getAverage(mpuD
 
     int output = pid.calculateOutput(currentPosition, targetPosition);
 
-    commandMotor(output);
+    motor.commandMotor(output);
 }
 
 void loop() {
@@ -92,7 +82,7 @@ void loop() {
     if (mpuData.isTrusted)
         adjustLens(timeInfo.sunPosition());
     else
-        motor.stop();
+        motor.commandMotor(0);
 
 #ifdef DEBUG
     Serial.println("");
