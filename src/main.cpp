@@ -16,40 +16,18 @@
 #define SSID "rede"
 #define PASSWORD "senha"
 
-//---------------------------- RTC settings ----------------------------//
-
-TimeController timeInfo(0x68);
-
-//---------------------------- IMU settings ----------------------------//
-
-MPUData mpuData;
-MPU6050_Solar mpu(0x69);
-MovingAverage filter;
-
-//---------------------------- Driver Settings ----------------------------//
-
-#define LPWM 4     //lpwm
-#define RPWM 2     //rpwm
-#define ENABLE 19  //pwm enable
-Motor motor(ENABLE, LPWM, RPWM);
-
-//---------------------------- PID Settings ----------------------------//
-
-PID_Controller pid(1, 0.3, 0.4);
-
-//::::::::::::::::::::::::::::::::: SETUP ::::::::::::::::::::::::::::::::://
-
 void setup() {
-#ifdef DEBUG
-    Serial.begin(115200);
-#endif
     //---------WIFI---------//
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID, PASSWORD);
 
+    Serial.println(WiFi.localIP());
     initHTTPServer();
 
+#ifdef DEBUG
+    Serial.begin(115200);
     MDNS.begin("lif");
+#endif
 
     //-------- I2C --------//
     Wire.begin();

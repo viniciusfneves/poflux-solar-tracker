@@ -1,7 +1,10 @@
-#ifndef MOTORS_HPP
-#define MOTORS_HPP
+#pragma once
 
 #include <Arduino.h>
+
+#define LPWM 4     //lpwm
+#define RPWM 2     //rpwm
+#define ENABLE 19  //pwm enable
 
 #define MIN_OUTPUT_PWM 180
 #define MAX_OUTPUT_PWM 255
@@ -53,20 +56,22 @@ class Motor {
 #ifdef DEBUG_MOTOR
             Serial.print(" | Motor: Parado");
 #endif
-        } else if (PWM < 0)
+        } else if (PWM < 0) {
             rotateClockwise(abs(PWM));
 #ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Horário");
-        Serial.print(" | PWM: ");
-        Serial.printf("%03d", PWM);
+            Serial.print(" | Motor: Horário");
+            Serial.print(" | PWM: ");
+            Serial.printf("%03d", PWM);
 #endif
-        else rotateCounterClockwise(abs(PWM));
+        } else {
+            rotateCounterClockwise(abs(PWM));
 #ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Anti-Horário");
-        Serial.print(" | PWM: ");
-        Serial.printf("%03d", PWM);
+            Serial.print(" | Motor: Anti-Horário");
+            Serial.print(" | PWM: ");
+            Serial.printf("%03d", PWM);
 #endif
+        }
     }
 };
 
-#endif  // MOTORS_HPP
+Motor motor(ENABLE, LPWM, RPWM);

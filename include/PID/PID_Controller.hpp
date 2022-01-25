@@ -1,5 +1,4 @@
-#ifndef PID_CONTROLLER_HPP
-#define PID_CONTROLLER_HPP
+#pragma once
 
 #include <Arduino.h>
 
@@ -87,4 +86,4 @@ class PID_Controller {
     }
 };
 
-#endif  // PID_CONTROLLER_HPP
+PID_Controller pid(1, 0.3, 0.4);

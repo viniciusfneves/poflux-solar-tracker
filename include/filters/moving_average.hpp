@@ -1,5 +1,4 @@
-#ifndef MOVING_AVERAGE_HPP
-#define MOVING_AVERAGE_HPP
+#pragma once
 
 #define SAMPLES 25
 
@@ -35,4 +34,4 @@ class MovingAverage {
     }
 };
 
-#endif  // MOVING_AVERAGE_HPP
+MovingAverage filter;

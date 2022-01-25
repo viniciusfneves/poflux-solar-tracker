@@ -1,3 +1,5 @@
+#pragma once
+
 #include <RtcDS3231.h>
 #include <RtcDateTime.h>
 #include <TimeLord.h>  //Biblioteca que indica posição do Sol. Pode ser removida e substituida por algo mais simples?
@@ -64,3 +66,5 @@ class TimeController {
         return (map(_dayCurrentTime, _daySunRise, _daySunSet, 90.0, -90.0));  //Setpoint: conversão do horário atual em segundos para o equivalente em graus dados os extremos do ciclo solar variáveis e os extremos de angulação do sensor
     }
 };
+
+TimeController timeInfo(0x68);

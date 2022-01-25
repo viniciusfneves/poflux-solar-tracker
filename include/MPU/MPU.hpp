@@ -1,5 +1,4 @@
-#ifndef MPU_HPP
-#define MPU_HPP
+#pragma once
 
 #include <Wire.h>
 #include <math.h>
@@ -188,4 +187,5 @@ class MPU6050_Solar {
     }
 };
 
-#endif  // MPU_HPP
+MPUData mpuData;
+MPU6050_Solar mpu(0x69);
