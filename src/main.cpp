@@ -17,17 +17,23 @@
 #define PASSWORD "senha"
 
 void setup() {
+#ifdef DEBUG
+    Serial.begin(115200);
+#endif
+
     //---------WIFI---------//
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID, PASSWORD);
-
+    Serial.print("Conectando à rede WiFi");
+    while (WiFi.status() != WL_CONNECTED) {
+        Serial.print(".");
+        delay(175);
+    }
+    Serial.print("Connected: ");
     Serial.println(WiFi.localIP());
-    initHTTPServer();
 
-#ifdef DEBUG
-    Serial.begin(115200);
     MDNS.begin("lif");
-#endif
+    initHTTPServer();
 
     //-------- I2C --------//
     Wire.begin();
