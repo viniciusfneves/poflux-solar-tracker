@@ -19,6 +19,11 @@ class Motor {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
+#ifdef DEBUG_MOTOR
+        Serial.print(" | Motor: Horário");
+        Serial.print(" | PWM: ");
+        Serial.printf("%03d", PWM);
+#endif
     }
 
     void rotateCounterClockwise(int PWM) {
@@ -26,11 +31,19 @@ class Motor {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
+#ifdef DEBUG_MOTOR
+        Serial.print(" | Motor: Anti-Horário");
+        Serial.print(" | PWM: ");
+        Serial.printf("%03d", PWM);
+#endif
     }
     void stop() {
         digitalWrite(_enable, LOW);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
+#ifdef DEBUG_MOTOR
+        Serial.print(" | Motor: Parado");
+#endif
     }
 
    public:
@@ -51,26 +64,12 @@ class Motor {
 
     // Aciona o driver de motor
     void commandMotor(int PWM) {
-        if (PWM == 0) {
+        if (PWM == 0)
             stop();
-#ifdef DEBUG_MOTOR
-            Serial.print(" | Motor: Parado");
-#endif
-        } else if (PWM < 0) {
+        else if (PWM < 0)
             rotateClockwise(abs(PWM));
-#ifdef DEBUG_MOTOR
-            Serial.print(" | Motor: Horário");
-            Serial.print(" | PWM: ");
-            Serial.printf("%03d", PWM);
-#endif
-        } else {
+        else
             rotateCounterClockwise(abs(PWM));
-#ifdef DEBUG_MOTOR
-            Serial.print(" | Motor: Anti-Horário");
-            Serial.print(" | PWM: ");
-            Serial.printf("%03d", PWM);
-#endif
-        }
     }
 };
 
