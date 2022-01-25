@@ -8,6 +8,7 @@
 #include <MPU/MPU.hpp>
 #include <PID/PID_Controller.hpp>
 #include <TimeController/TimeController.hpp>
+#include <configurations/configurations.hpp>
 #include <filters/moving_average.hpp>
 #include <motor/motor.hpp>
 
@@ -27,12 +28,14 @@ void setup() {
     Serial.print("Conectando à rede WiFi");
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print(".");
-        delay(175);
+        delay(200);
     }
     Serial.print("Connected: ");
     Serial.println(WiFi.localIP());
 
-    MDNS.begin("lif");
+    if (MDNS.begin("lif")) {
+        Serial.print("mDNS Iniciado");
+    }
     initHTTPServer();
 
     //-------- I2C --------//
@@ -50,12 +53,10 @@ void setup() {
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPTIONAL] -> ângulo atual da lente
 void adjustLens(int targetPosition, int currentPosition = filter.getAverage(mpuData.roll)) {
-#ifdef TEST_SETPOINT
-    targetPosition = SETPOINT;
-#else
-    targetPosition = constrain(targetPosition, -82, 82);
-#endif
     currentPosition = constrain(currentPosition, -85, 85);
+    targetPosition = constrain(targetPosition, -82, 82);
+    if (configs.mode == Mode::Manual)
+        targetPosition = configs.manualSetpoint;
 
     int output = pid.calculateOutput(currentPosition, targetPosition);
 
