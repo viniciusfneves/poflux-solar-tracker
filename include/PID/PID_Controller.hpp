@@ -9,6 +9,7 @@ class PID_Controller {
     double _kp, _ki, _kd;
     int _outputLimit;
     int _integrativeLimit;
+    double _integrativeLimitPercentage;
     double _threshold;
     double _lastError = 0.;
     double _lastIntegrativeValue = 0.;
@@ -30,17 +31,35 @@ class PID_Controller {
         Serial.printf("%03d", output);
     }
 
+    void _setBoundaries() {
+        _outputLimit = (int)(45 * (_kp + _ki * _integrativeLimitPercentage));
+        _integrativeLimit = (int)(_outputLimit * _integrativeLimitPercentage);
+    }
+
    public:
     // O limite integrativo controlado pela variável integrativeLimit deve ser passado em porcentagem
     // Esse valor definirá qual porcentagem máxima de participação no output do controlador a constrante integrativa terá
     PID_Controller(double kp, double ki, double kd, double threshold = 1.7, int integrativeLimitPercentage = 75) {
-        integrativeLimitPercentage /= 100;
+        _integrativeLimitPercentage = (double)integrativeLimitPercentage / 100.;
+        _threshold = threshold;
         _kp = kp;
         _ki = ki;
         _kd = kd;
-        _threshold = threshold;
-        _outputLimit = 45 * (_kp + _ki * integrativeLimitPercentage);
-        _integrativeLimit = _outputLimit * integrativeLimitPercentage;
+        _setBoundaries();
+    }
+
+    void setKp(double kp) {
+        _kp = kp;
+        _setBoundaries();
+    }
+
+    void setKi(double ki) {
+        _ki = ki;
+        _setBoundaries();
+    }
+
+    void setKd(double kd) {
+        _kd = kd;
     }
 
     int calculateOutput(double actualState, double target = 0., unsigned long time = millis()) {
@@ -71,7 +90,7 @@ class PID_Controller {
         _lastIntegrativeValue = I;
         _lastError = error;
 
-        int output = static_cast<int>(P + I + D);
+        int output = (int)(P + I + D);
         output = constrain(output, -_outputLimit, _outputLimit);
         output = map(output, -_outputLimit, _outputLimit, -255, 255);
 
@@ -86,4 +105,4 @@ class PID_Controller {
     }
 };
 
-PID_Controller pid(1, 0.3, 0.4);
+PID_Controller pid(1.7, 1, 450);
