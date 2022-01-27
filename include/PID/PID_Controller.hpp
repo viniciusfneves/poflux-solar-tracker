@@ -58,9 +58,11 @@ class PID_Controller {
         _setBoundaries();
     }
 
-    void setKd(double kd) {
-        _kd = kd;
-    }
+    void setKd(double kd) { _kd = kd; }
+
+    double getKp() { return _kp; }
+    double getKi() { return _ki; }
+    double getKd() { return _kd; }
 
     int calculateOutput(double actualState, double target = 0., unsigned long time = millis()) {
         double error = actualState - target;
@@ -100,9 +102,7 @@ class PID_Controller {
         return output;
     }
 
-    void reset() {
-        _lastIntegrativeValue = 0.;
-    }
+    void reset() { _lastIntegrativeValue = 0.; }
 };
 
 PID_Controller pid(1.7, 1, 450);
