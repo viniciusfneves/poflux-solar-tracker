@@ -7,7 +7,7 @@
 #define RAW_TO_RAD_PER_SECOND 131 * 0.01745
 #define RAW_TO_DEGREES_PER_SECOND 131.
 #define RAW_TO_CELSIUS 340.
-#define SECONDS_TO_RESTART 5
+#define SECONDS_TO_RECONNECT 1
 
 //Estutura para armazenar os dados do MPU
 struct MPUData {
@@ -46,6 +46,19 @@ class MPU6050_Solar {
                 Serial.print(" - Código de erro desconhecido");
                 break;
         }
+    }
+
+    void _handleErrors() {
+        if (_mpuErrorCounter >= 10) {
+            Serial.print("\n//---- FALHA NA LEITURA DO MPU ----//");
+            delay(100);
+            Serial.print("\nReiniciando conexão com o MPU");
+            init();
+            _mpuErrorCounter = 0;
+            return;
+        }
+        _mpuErrorCounter++;
+        delay(50);
     }
 
    public:
@@ -97,13 +110,13 @@ class MPU6050_Solar {
                 throw(response);
 
         } catch (const byte e) {
-            Serial.printf("\n\n\nMPU não pôde ser encontrado ou calibrado corretamente. Tentando reiniciar em %d segundos\n", SECONDS_TO_RESTART);
-            for (int cont = 0; cont < SECONDS_TO_RESTART * 2; cont++) {
-                delay(500);
+            Serial.printf("\n\n\nMPU não pôde ser encontrado ou calibrado corretamente. Tentando novamente em %d segundos\n", SECONDS_TO_RECONNECT);
+            for (int cont = 0; cont < SECONDS_TO_RECONNECT * 10; cont++) {
+                delay(100);
                 Serial.print(".");
             }
-            Serial.print("\nReiniciando aplicação!");
-            ESP.restart();
+            Serial.print("\nReconenctando ao MPU...");
+            init();
         }
 
         delay(100);  // Aguarda o MPU estabilizar a leitura
@@ -164,25 +177,13 @@ class MPU6050_Solar {
             // Serial.printf("%03.2f", _data.pitch);
 #endif
         } catch (const byte e) {
-            // Caso já tenham havido 200 tentativas consecutivas de leitura sem sucesso: tenta reiniciar o ESP
-            if (_mpuErrorCounter >= 200) {
-                Serial.print("\n//---- FALHA NA LEITURA DO MPU ----//");
-                ESP.restart();
-            }
-            _mpuErrorCounter++;
-            _data.isTrusted = false;
             _debugI2CResponse(e);
-            delay(50);  // Esse delay é necessário, caso contrário o BUS I2C do ESP crasha com a excessão
-            Wire.flush();
-        } catch (const char* e) {
-            if (_mpuErrorCounter >= 200) {
-                Serial.println("\n//---- FALHA NA LEITURA DO MPU ----//");
-                ESP.restart();
-            }
-            _mpuErrorCounter++;
             _data.isTrusted = false;
-            Serial.print(e);
-            delay(50);
+            _handleErrors();
+        } catch (const char* e) {
+            Serial.println(e);
+            _data.isTrusted = false;
+            _handleErrors();
         }
     }
 };
