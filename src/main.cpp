@@ -9,6 +9,7 @@
 #include <PID/PID_Controller.hpp>
 #include <TimeController/TimeController.hpp>
 #include <configurations/configurations.hpp>
+#include <debugLED/debugLED.hpp>
 #include <filters/moving_average.hpp>
 #include <motor/motor.hpp>
 
@@ -21,6 +22,8 @@ void setup() {
 #ifdef DEBUG
     Serial.begin(115200);
 #endif
+    // LEDs de DEBUG
+    initLEDs();
 
     //---------WIFI---------//
     WiFi.mode(WIFI_STA);
@@ -33,9 +36,7 @@ void setup() {
     Serial.print("Connected: ");
     Serial.println(WiFi.localIP());
 
-    if (MDNS.begin("lif")) {
-        Serial.print("mDNS Iniciado");
-    }
+    MDNS.begin("lif");
     initHTTPServer();
 
     //-------- I2C --------//
@@ -47,6 +48,7 @@ void setup() {
     mpu.init();                            // Configura e inicia o MPU
     mpu.readMPU(mpuData);                  // realiza a primeira leitura do MPU para preencher os dados do MPUData
     filter.setInitialValue(mpuData.roll);  // Seta o valor inicial no filtro de média movel
+    updateLEDState(LEDState::running);
 }
 
 // Comanda o ajuste do ângulo da lente
