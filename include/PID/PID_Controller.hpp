@@ -17,18 +17,9 @@ class PID_Controller {
     unsigned long _lastUnstableTimestamp = 0UL;
 
     void _debugPrints(double actualState, double target, double P, double I, double D, int output) {
-        Serial.print(" | Input: ");
-        Serial.printf("%02.1f", actualState);
-        Serial.print(" | Setpoint: ");
-        Serial.printf("%02.1f", target);
-        Serial.print(" | P: ");
-        Serial.printf("%.3f", P);
-        Serial.print(" | I: ");
-        Serial.printf("%.3f", I);
-        Serial.print(" | D: ");
-        Serial.printf("%.3f", D);
-        Serial.print(" | OUTPUT: ");
-        Serial.printf("%03d", output);
+        Serial.printf(" | Input: %03.1f | Setpoint:  %03.1f", actualState, target);
+        Serial.printf(" | P: %05.2f | I:  %05.2f | D:  %05.2f", P, I, D);
+        Serial.printf(" | OUTPUT: %03d", output);
     }
 
     void _setBoundaries() {

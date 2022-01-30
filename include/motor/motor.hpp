@@ -20,9 +20,7 @@ class Motor {
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
 #ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Horário");
-        Serial.print(" | PWM: ");
-        Serial.printf("%03d", PWM);
+        Serial.printf(" | Motor: H | PWM: %03d", PWM);
 #endif
     }
 
@@ -32,9 +30,7 @@ class Motor {
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
 #ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Anti-Horário");
-        Serial.print(" | PWM: ");
-        Serial.printf("%03d", PWM);
+        Serial.printf(" | Motor: A-H | PWM: %03d", PWM);
 #endif
     }
     void stop() {
@@ -42,7 +38,7 @@ class Motor {
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
 #ifdef DEBUG_MOTOR
-        Serial.print(" | Motor: Parado");
+        Serial.printf(" | Motor: P");
 #endif
     }
 

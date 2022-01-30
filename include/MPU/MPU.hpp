@@ -3,6 +3,8 @@
 #include <Wire.h>
 #include <math.h>
 
+#include <debugLED/debugLED.hpp>
+
 #define RAW_TO_G 16384.
 #define RAW_TO_RAD_PER_SECOND 131 * 0.01745
 #define RAW_TO_DEGREES_PER_SECOND 131.
@@ -19,46 +21,80 @@ struct MPUData {
 class MPU6050_Solar {
    private:
     int _mpuAddress;
-    int _mpuErrorCounter = 0;
 
     void _debugI2CResponse(const byte errorCode) {
-        Serial.print(" | ");
         switch (errorCode) {
             case 0:
-                Serial.print("MPU: Sucesso!");
+                Serial.printf("MPU: Sucesso!");
                 break;
             case 1:
-                Serial.print("MPU ERROR: 1 - Mensagem grande demais para o buffer");
+                Serial.printf("MPU ERROR: Mensagem grande demais para o buffer");
                 break;
             case 2:
-                Serial.print("MPU ERROR: 2 - NACK recebido no endereço de transmissão");
+                Serial.printf("MPU ERROR: NACK recebido no endereço de transmissão");
                 break;
             case 3:
-                Serial.print("MPU ERROR: 3 - NACK recebido ao transmitir a mensagem");
+                Serial.printf("MPU ERROR: NACK recebido ao transmitir a mensagem");
                 break;
             case 4:
-                Serial.print("MPU ERROR: 4 - Erro genérico...");
+                Serial.printf("MPU ERROR: Erro genérico...");
                 break;
 
             default:
-                Serial.print("MPU ERROR: ");
-                Serial.print(errorCode);
-                Serial.print(" - Código de erro desconhecido");
+                Serial.printf("MPU ERROR: %02d - Código de erro desconhecido", errorCode);
                 break;
         }
     }
 
     void _handleErrors() {
-        if (_mpuErrorCounter >= 10) {
-            Serial.print("\n//---- FALHA NA LEITURA DO MPU ----//");
-            delay(100);
-            Serial.print("\nReiniciando conexão com o MPU");
-            init();
-            _mpuErrorCounter = 0;
-            return;
-        }
-        _mpuErrorCounter++;
-        delay(50);
+        updateLEDState(LEDState::solving_error);
+        reset();
+    }
+
+    void
+    _init() {
+        byte response;
+        // -- Configurações gerais -- //
+        Wire.beginTransmission(_mpuAddress);
+        Wire.write(0x19);  // Registro SMPLRT_DIV
+        Wire.write(0);
+        response = Wire.endTransmission();
+        if (response != 0)
+            throw(response);
+
+        Wire.beginTransmission(_mpuAddress);
+        Wire.write(0x1A);  // Registro CONFIG
+        Wire.write(0);
+        response = Wire.endTransmission();
+        if (response != 0)
+            throw(response);
+
+        // -- Configuração do Gyro -- //
+        Wire.beginTransmission(_mpuAddress);
+        Wire.write(0x1B);  // Registro de configuração do Gyro
+        Wire.write(0);     // Configura o Full Scale Range para + ou - 250 graus por segundo
+        response = Wire.endTransmission();
+        if (response != 0)
+            throw(response);
+
+        // -- Configuração do Acelerômetro -- //
+        Wire.beginTransmission(_mpuAddress);
+        Wire.write(0x1C);  // Registro de configuração do Accel
+        Wire.write(0);     // Configura o Full Scale Range para + ou - 2g graus por segundo
+        response = Wire.endTransmission();
+        if (response != 0)
+            throw(response);
+
+        // Ativa o MPU
+        Wire.beginTransmission(_mpuAddress);
+        Wire.write(0x6B);  // Registro PWR_MGMT_1
+        Wire.write(0);     // Ativa o MPU-6050
+        response = Wire.endTransmission();
+        if (response != 0)
+            throw(response);
+
+        updateLEDState(LEDState::running);
+        delay(100);  // Aguarda o MPU estabilizar a leitura
     }
 
    public:
@@ -68,58 +104,28 @@ class MPU6050_Solar {
 
     // --    Configura o MPU    -- //
     void init() {
-        byte response;
         try {
-            // -- Configurações gerais -- //
-            Wire.beginTransmission(_mpuAddress);
-            Wire.write(0x19);  // Registro SMPLRT_DIV
-            Wire.write(0);
-            response = Wire.endTransmission();
-            if (response != 0)
-                throw(response);
-
-            Wire.beginTransmission(_mpuAddress);
-            Wire.write(0x1A);  // Registro CONFIG
-            Wire.write(0);
-            response = Wire.endTransmission();
-            if (response != 0)
-                throw(response);
-
-            // -- Configuração do Gyro -- //
-            Wire.beginTransmission(_mpuAddress);
-            Wire.write(0x1B);  // Registro de configuração do Gyro
-            Wire.write(0);     // Configura o Full Scale Range para + ou - 250 graus por segundo
-            response = Wire.endTransmission();
-            if (response != 0)
-                throw(response);
-
-            // -- Configuração do Acelerômetro -- //
-            Wire.beginTransmission(_mpuAddress);
-            Wire.write(0x1C);  // Registro de configuração do Accel
-            Wire.write(0);     // Configura o Full Scale Range para + ou - 2g graus por segundo
-            response = Wire.endTransmission();
-            if (response != 0)
-                throw(response);
-
-            // Ativa o MPU
-            Wire.beginTransmission(_mpuAddress);
-            Wire.write(0x6B);  // Registro PWR_MGMT_1
-            Wire.write(0);     // Ativa o MPU-6050
-            response = Wire.endTransmission();
-            if (response != 0)
-                throw(response);
-
+            _init();
         } catch (const byte e) {
-            Serial.printf("\n\n\nMPU não pôde ser encontrado ou calibrado corretamente. Tentando novamente em %d segundos\n", SECONDS_TO_RECONNECT);
-            for (int cont = 0; cont < SECONDS_TO_RECONNECT * 10; cont++) {
-                delay(100);
+            updateLEDState(LEDState::error);
+            for (int cont = 0; cont < SECONDS_TO_RECONNECT * 2; cont++) {
+                delay(500);
                 Serial.print(".");
             }
-            Serial.print("\nReconenctando ao MPU...");
+            Serial.printf("\nReconenctando ao MPU...");
             init();
         }
+    }
 
-        delay(100);  // Aguarda o MPU estabilizar a leitura
+    void reset() {
+        updateLEDState(LEDState::solving_error);
+        try {
+            _init();
+        } catch (const byte e) {
+            Serial.printf("\nFalha no MPU -> Reiniciando conexão...");
+            delay(200);
+            reset();
+        }
     }
 
     void readMPU(MPUData& _data) {
@@ -132,11 +138,10 @@ class MPU6050_Solar {
 
             //Solicita os dados do sensor
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
-            if (responseLenght == 14) {
-                _mpuErrorCounter = 0;
+            if (responseLenght == 14)
                 _data.isTrusted = true;
-            } else
-                throw "MPU ERROR > Número de bytes recebidos é diferente do número de bytes requisitados";
+            else
+                throw "MPU ERROR: Falha na leitura do MPU";
 
             //Armazena o valor dos registradores em um array
             int16_t mpuRawData[7];
@@ -161,20 +166,14 @@ class MPU6050_Solar {
 
             _data.roll = RAD_TO_DEG * atan2(_data.AcY, sigZ * sqrt(_data.AcZ * _data.AcZ + _data.AcX * _data.AcX));
             _data.pitch = -RAD_TO_DEG * atan2(_data.AcX, sqrt(_data.AcZ * _data.AcZ + _data.AcY * _data.AcY));
+            updateLEDState(LEDState::running);
 
             //-- DEBUG --//
 
 #ifdef DEBUG_MPU
-            // Serial.print(" | X Gs: ");
-            // Serial.printf("%03.2f", _data.AcX);
-            // Serial.print(" | Y Gs: ");
-            // Serial.printf("%03.2f", _data.AcY);
-            // Serial.print(" | Z Gs: ");
-            // Serial.printf("%03.2f", _data.AcZ);
-            Serial.print(" | MPU Roll: ");
-            Serial.printf("%03.2f", _data.roll);
-            // Serial.print(" | MPU Pitch: ");
-            // Serial.printf("%03.2f", _data.pitch);
+            // Serial.printf(" | X Gs: %02.1f | Y Gs: %02.1f | Z Gs: %02.1f", _data.AcX, _data.AcY, _data.AcZ);
+            Serial.printf(" | Roll: %04.1f", _data.roll);
+            //Serial.printf(" | Pitch: %04.1f", _data.pitch);
 #endif
         } catch (const byte e) {
             _debugI2CResponse(e);
