@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include <debugLED/debugLED.hpp>
+#include <motor/motor.hpp>
 
 #define RAW_TO_G 16384.
 #define RAW_TO_RAD_PER_SECOND 131 * 0.01745
@@ -47,12 +48,12 @@ class MPU6050_Solar {
     }
 
     void _handleErrors() {
+        motor.commandMotor(0);
         updateLEDState(LEDState::solving_error);
         reset();
     }
 
-    void
-    _init() {
+    bool _init() {
         byte response;
         // -- Configurações gerais -- //
         Wire.beginTransmission(_mpuAddress);
@@ -60,14 +61,14 @@ class MPU6050_Solar {
         Wire.write(0);
         response = Wire.endTransmission();
         if (response != 0)
-            throw(response);
+            return false;
 
         Wire.beginTransmission(_mpuAddress);
         Wire.write(0x1A);  // Registro CONFIG
         Wire.write(0);
         response = Wire.endTransmission();
         if (response != 0)
-            throw(response);
+            return false;
 
         // -- Configuração do Gyro -- //
         Wire.beginTransmission(_mpuAddress);
@@ -75,15 +76,15 @@ class MPU6050_Solar {
         Wire.write(0);     // Configura o Full Scale Range para + ou - 250 graus por segundo
         response = Wire.endTransmission();
         if (response != 0)
-            throw(response);
+            return false;
 
         // -- Configuração do Acelerômetro -- //
         Wire.beginTransmission(_mpuAddress);
         Wire.write(0x1C);  // Registro de configuração do Accel
-        Wire.write(0);     // Configura o Full Scale Range para + ou - 2g graus por segundo
+        Wire.write(0);     // Configura o Full Scale Range para + ou - 2gs
         response = Wire.endTransmission();
         if (response != 0)
-            throw(response);
+            return false;
 
         // Ativa o MPU
         Wire.beginTransmission(_mpuAddress);
@@ -91,10 +92,10 @@ class MPU6050_Solar {
         Wire.write(0);     // Ativa o MPU-6050
         response = Wire.endTransmission();
         if (response != 0)
-            throw(response);
+            return false;
 
         updateLEDState(LEDState::running);
-        delay(100);  // Aguarda o MPU estabilizar a leitura
+        return true;
     }
 
    public:
@@ -104,9 +105,7 @@ class MPU6050_Solar {
 
     // --    Configura o MPU    -- //
     void init() {
-        try {
-            _init();
-        } catch (const byte e) {
+        if (!_init()) {
             updateLEDState(LEDState::error);
             for (int cont = 0; cont < SECONDS_TO_RECONNECT * 2; cont++) {
                 delay(500);
@@ -119,12 +118,8 @@ class MPU6050_Solar {
 
     void reset() {
         updateLEDState(LEDState::solving_error);
-        try {
-            _init();
-        } catch (const byte e) {
-            Serial.printf("\nFalha no MPU -> Reiniciando conexão...");
-            delay(200);
-            reset();
+        while (!_init()) {
+            delay(100);
         }
     }
 
@@ -138,9 +133,10 @@ class MPU6050_Solar {
 
             //Solicita os dados do sensor
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
-            if (responseLenght == 14)
+            if (responseLenght == 14) {
+                updateLEDState(LEDState::running);
                 _data.isTrusted = true;
-            else
+            } else
                 throw "MPU ERROR: Falha na leitura do MPU";
 
             //Armazena o valor dos registradores em um array
@@ -166,7 +162,6 @@ class MPU6050_Solar {
 
             _data.roll = RAD_TO_DEG * atan2(_data.AcY, sigZ * sqrt(_data.AcZ * _data.AcZ + _data.AcX * _data.AcX));
             _data.pitch = -RAD_TO_DEG * atan2(_data.AcX, sqrt(_data.AcZ * _data.AcZ + _data.AcY * _data.AcY));
-            updateLEDState(LEDState::running);
 
             //-- DEBUG --//
 
