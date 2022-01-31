@@ -13,8 +13,6 @@
 #include <filters/moving_average.hpp>
 #include <motor/motor.hpp>
 
-//---------------------------- WIFi ----------------------------//
-
 #define SSID "rede"
 #define PASSWORD "senha"
 
@@ -42,18 +40,20 @@ void setup() {
     //-------- I2C --------//
     Wire.begin();
 
-    //-------- Sensors --------//
+    //-------- Sensores --------//
     timeInfo.init();
     motor.init();
-    mpu.init();                            // Configura e inicia o MPU
+    mpu.init();
     mpu.readMPU(mpuData);                  // realiza a primeira leitura do MPU para preencher os dados do MPUData
     filter.setInitialValue(mpuData.roll);  // Seta o valor inicial no filtro de média movel
+
+    // Se as configurações forem concluídas com sucesso, atualiza o estado do programa nos LEDs de DEBUG
     updateLEDState(LEDState::running);
 }
 
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
-// int currentePosition [OPTIONAL] -> ângulo atual da lente
+// int currentePosition [OPCIONAL] -> ângulo atual da lente
 void adjustLens(int targetPosition, int currentPosition = filter.getAverage(mpuData.roll)) {
     currentPosition = constrain(currentPosition, -85, 85);
     targetPosition = constrain(targetPosition, -82, 82);
@@ -69,10 +69,7 @@ void loop() {
     timeInfo.callRTC();
     mpu.readMPU(mpuData);
 
-    if (mpuData.isTrusted)
-        adjustLens(timeInfo.sunPosition());
-    else
-        motor.commandMotor(0);
+    adjustLens(timeInfo.sunPosition());
 
 #ifdef DEBUG
     Serial.println("");
