@@ -1,0 +1,16 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html {
+	font-family: Helvetica;
+	margin: 0 auto;
+	text-align: center;
+	background-color: rgb(40, 40, 40);
+	color: white;
+}
+
+body {
+	margin-top: 50px;
+}

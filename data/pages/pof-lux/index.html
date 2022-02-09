@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="style.css" />
+		<link rel="stylesheet" href="info_display.css" />
+		<script type="module" src="monitor_script.js"></script>
+		<title>Monitor POF LUX</title>
+	</head>
+	<body>
+		<h3 id="connection_status">CLOSED</h3>
+		<div id="rtc_info">
+			<div class="inline_display">
+				<h3>Dia</h3>
+				<h3 id="rtc_day"></h3>
+			</div>
+			<div class="inline_display">
+				<h3>Mês</h3>
+				<h3 id="rtc_month"></h3>
+			</div>
+			<div class="inline_display">
+				<h3>Ano</h3>
+				<h3 id="rtc_year"></h3>
+			</div>
+			<div class="inline_display">
+				<h3>Hora</h3>
+				<h3 id="rtc_hour"></h3>
+			</div>
+			<div class="inline_display">
+				<h3>Minuto</h3>
+				<h3 id="rtc_minute"></h3>
+			</div>
+			<div class="inline_display">
+				<h3>Segundo</h3>
+				<h3 id="rtc_second"></h3>
+			</div>
+		</div>
+
+		<div id="lens_info">
+			<div class="inline_display">
+				<h3>Angulo da Lente</h3>
+				<h3 id="lens_angle"></h3>
+			</div>
+			<div class="inline_display">
+				<h3>Posição do Sol</h3>
+				<h3 id="sun_position"></h3>
+			</div>
+		</div>
+
+		<div id="motor_info">
+			<div class="inline_display">
+				<h3>Potência</h3>
+				<h3 id="motor_pwm"></h3>
+			</div>
+
+			<div class="inline_display">
+				<h3>Direção</h3>
+				<h3 id="motor_direction"></h3>
+			</div>
+		</div>
+		<div id="pid_info">
+			<div>
+				<div class="inline_display">
+					<h3>Kp</h3>
+					<h3 id="kp"></h3>
+				</div>
+
+				<div class="inline_display">
+					<h3>Ki</h3>
+					<h3 id="ki"></h3>
+				</div>
+
+				<div class="inline_display">
+					<h3>Kd</h3>
+					<h3 id="kd"></h3>
+				</div>
+			</div>
+			<div>
+				<div class="inline_display">
+					<h3>P</h3>
+					<h3 id="P"></h3>
+				</div>
+
+				<div class="inline_display">
+					<h3>I</h3>
+					<h3 id="I"></h3>
+				</div>
+
+				<div class="inline_display">
+					<h3>D</h3>
+					<h3 id="D"></h3>
+				</div>
+				<div class="inline_display">
+					<h3>Output</h3>
+					<h3 id="pid_output"></h3>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
