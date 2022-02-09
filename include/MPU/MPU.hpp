@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include <debugLED/debugLED.hpp>
+#include <filters/moving_average.hpp>
 #include <motor/motor.hpp>
 
 #define RAW_TO_G 16384.
@@ -95,6 +96,9 @@ class MPU6050_Solar {
             return false;
 
         updateLEDState(LEDState::running);
+        readMPU();
+        filter.setInitialValue(data.roll);  // Seta o valor inicial no filtro de média movel
+
         return true;
     }
 
@@ -102,6 +106,8 @@ class MPU6050_Solar {
     MPU6050_Solar(int MPUAddress) {
         _mpuAddress = MPUAddress;
     }
+
+    MPUData data;
 
     // --    Configura o MPU    -- //
     void init() {
@@ -123,7 +129,7 @@ class MPU6050_Solar {
         }
     }
 
-    void readMPU(MPUData& _data) {
+    void readMPU() {
         try {
             Wire.beginTransmission(_mpuAddress);
             Wire.write(0x3B);  // Começa a leitura abaixo no endereço do registrador 0x3B (ACCEL_XOUT_H)
@@ -135,7 +141,7 @@ class MPU6050_Solar {
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
             if (responseLenght == 14) {
                 updateLEDState(LEDState::running);
-                _data.isTrusted = true;
+                data.isTrusted = true;
             } else
                 throw "MPU ERROR: Falha na leitura do MPU";
 
@@ -150,37 +156,29 @@ class MPU6050_Solar {
             // Aceleração  = G
             // Temperatura = Celsius
             // Gyro        = Rad/s
-            _data.AcX = (float)mpuRawData[0] / RAW_TO_G;
-            _data.AcY = (float)mpuRawData[1] / RAW_TO_G;
-            _data.AcZ = (float)mpuRawData[2] / RAW_TO_G;
-            _data.Tmp = (float)mpuRawData[3] / RAW_TO_CELSIUS + 35;
-            _data.GyX = (float)mpuRawData[4] / RAW_TO_DEGREES_PER_SECOND;
-            _data.GyY = (float)mpuRawData[5] / RAW_TO_DEGREES_PER_SECOND;
-            _data.GyZ = (float)mpuRawData[6] / RAW_TO_DEGREES_PER_SECOND;
+            data.AcX = (float)mpuRawData[0] / RAW_TO_G;
+            data.AcY = (float)mpuRawData[1] / RAW_TO_G;
+            data.AcZ = (float)mpuRawData[2] / RAW_TO_G;
+            data.Tmp = (float)mpuRawData[3] / RAW_TO_CELSIUS + 35;
+            data.GyX = (float)mpuRawData[4] / RAW_TO_DEGREES_PER_SECOND;
+            data.GyY = (float)mpuRawData[5] / RAW_TO_DEGREES_PER_SECOND;
+            data.GyZ = (float)mpuRawData[6] / RAW_TO_DEGREES_PER_SECOND;
 
-            int sigZ = _data.AcZ < 0 ? -1 : 1;
+            int sigZ = data.AcZ < 0 ? -1 : 1;
 
-            _data.roll = RAD_TO_DEG * atan2(_data.AcY, sigZ * sqrt(_data.AcZ * _data.AcZ + _data.AcX * _data.AcX));
-            _data.pitch = -RAD_TO_DEG * atan2(_data.AcX, sqrt(_data.AcZ * _data.AcZ + _data.AcY * _data.AcY));
-
-            //-- DEBUG --//
-
-#ifdef DEBUG_MPU
-            // Serial.printf(" | X Gs: %02.1f | Y Gs: %02.1f | Z Gs: %02.1f", _data.AcX, _data.AcY, _data.AcZ);
-            Serial.printf(" | Roll: %04.1f", _data.roll);
-            //Serial.printf(" | Pitch: %04.1f", _data.pitch);
-#endif
+            data.roll = RAD_TO_DEG * atan2(data.AcY, sigZ * sqrt(data.AcZ * data.AcZ + data.AcX * data.AcX));
+            data.roll = filter.getAverage(data.roll);
+            //data.pitch = -RAD_TO_DEG * atan2(data.AcX, sqrt(data.AcZ * data.AcZ + data.AcY * data.AcY));
         } catch (const byte e) {
             _debugI2CResponse(e);
-            _data.isTrusted = false;
+            data.isTrusted = false;
             _handleErrors();
         } catch (const char* e) {
             Serial.println(e);
-            _data.isTrusted = false;
+            data.isTrusted = false;
             _handleErrors();
         }
     }
 };
 
-MPUData mpuData;
 MPU6050_Solar mpu(0x69);
