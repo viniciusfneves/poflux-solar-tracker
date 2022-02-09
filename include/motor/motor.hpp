@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <analogWrite.h>
 
 #define LPWM 4     //lpwm
 #define RPWM 2     //rpwm
@@ -9,6 +10,16 @@
 #define MIN_OUTPUT_PWM 180
 #define MAX_OUTPUT_PWM 255
 #define pwmMap(value) map(value, 1, 255, MIN_OUTPUT_PWM, MAX_OUTPUT_PWM)
+
+struct MotorData {
+    uint8_t pwm;
+    String direction;
+
+    void setMotorState(uint8_t _pwm, String _direction) {
+        pwm = _pwm;
+        direction = _direction;
+    }
+};
 
 class Motor {
    private:
@@ -19,9 +30,7 @@ class Motor {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
-#ifdef DEBUG_MOTOR
-        Serial.printf(" | Motor: H | PWM: %03d", PWM);
-#endif
+        data.setMotorState(PWM, "AH");
     }
 
     void rotateCounterClockwise(int PWM) {
@@ -29,20 +38,18 @@ class Motor {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
-#ifdef DEBUG_MOTOR
-        Serial.printf(" | Motor: A-H | PWM: %03d", PWM);
-#endif
+        data.setMotorState(PWM, "H");
     }
     void stop() {
         digitalWrite(_enable, LOW);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
-#ifdef DEBUG_MOTOR
-        Serial.printf(" | Motor: P");
-#endif
+        data.setMotorState(0, "P");
     }
 
    public:
+    MotorData data;
+
     Motor(int enable_pin, int lpwm_pin, int rpwm_pin) {
         _enable = enable_pin;
         _lpwm = lpwm_pin;
@@ -56,6 +63,7 @@ class Motor {
         digitalWrite(_enable, LOW);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
+        data.setMotorState(0, "P");
     }
 
     // Aciona o driver de motor
