@@ -34,24 +34,7 @@ class TimeController {
         lord.Position(_latitude, _longitude);  //
     }
 
-    void callRTC() {
-        dateTime = rtc.GetDateTime();  // Atualiza o horário
-
-#ifdef DEBUG_RTC  //Printa data e hora na tela
-        Serial.print(dateTime.Day());
-        Serial.print("/");
-        Serial.print(dateTime.Month());
-        Serial.print("/");
-        Serial.print(dateTime.Year());
-        Serial.print("  ");
-        Serial.print(dateTime.Hour());
-        Serial.print(":");
-        Serial.print(dateTime.Minute());
-        Serial.print(":");
-        Serial.print(dateTime.Second());
-        Serial.print("  ");
-#endif
-    }
+    void callRTC() { dateTime = rtc.GetDateTime(); /*Atualiza o horário*/ }
 
     int sunPosition() {
         byte today[] = {dateTime.Second(), dateTime.Minute(), dateTime.Hour(), dateTime.Day(), dateTime.Month(), static_cast<byte>(dateTime.Year())};

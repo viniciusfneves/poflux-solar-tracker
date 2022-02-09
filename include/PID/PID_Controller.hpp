@@ -17,17 +17,6 @@ class PID_Controller {
     unsigned long _lastRun = 0UL;
     unsigned long _lastUnstableTimestamp = 0UL;
 
-    void _debugPrints(double actualState, double target, double P, double I, double D, int output) {
-        Serial.printf(" | Input: %03.1f | Setpoint:  %03.1f", actualState, target);
-        Serial.printf(" | P: %05.2f | I:  %05.2f | D:  %05.2f", P, I, D);
-        Serial.printf(" | OUTPUT: %03d", output);
-    }
-
-    void _setBoundaries() {
-        _outputLimit = (int)(45 * (_kp + _ki * _integrativeLimitPercentage));
-        _integrativeLimit = (int)(_outputLimit * _integrativeLimitPercentage);
-    }
-
    public:
     // O limite integrativo controlado pela variável integrativeLimit deve ser passado em porcentagem
     // Esse valor definirá qual porcentagem máxima de participação no output do controlador a constrante integrativa terá
