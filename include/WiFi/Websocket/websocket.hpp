@@ -32,6 +32,19 @@ void handleWSData(String message) {
     if (jsonM.containsKey("manual_setpoint")) {
         configs.manualSetpoint = (int)jsonM["manual_setpoint"];
     }
+    if (jsonM.containsKey("adjust")) {
+        if (jsonM["adjust"].containsKey("pid")) {
+            if (jsonM["adjust"]["pid"].containsKey("kp")) {
+                pid.setKp(jsonM["adjust"]["pid"]["kp"].toDouble());
+            }
+            if (jsonM["adjust"]["pid"].containsKey("ki")) {
+                pid.setKi(jsonM["adjust"]["pid"]["ki"].toDouble());
+            }
+            if (jsonM["adjust"]["pid"].containsKey("kd")) {
+                pid.setKd(jsonM["adjust"]["pid"]["kd"].toDouble());
+            }
+        }
+    }
 }
 
 void handleWSEvent(uint8_t client_id, WStype_t type, uint8_t *payload, size_t length) {
