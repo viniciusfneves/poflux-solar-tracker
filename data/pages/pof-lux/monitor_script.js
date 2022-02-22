@@ -21,6 +21,6 @@ ws.onmessage = function (response) {
 	document.getElementById("kd").innerHTML = json["PID_values"]["kd"];
 	document.getElementById("P").innerHTML = json["PID_values"]["p"].toFixed(1);
 	document.getElementById("I").innerHTML = json["PID_values"]["i"].toFixed(2);
-	document.getElementById("D").innerHTML = json["PID_values"]["d"];
+	document.getElementById("D").innerHTML = json["PID_values"]["d"].toFixed(2);
 	document.getElementById("pid_output").innerHTML = json["PID_values"]["output"];
 };

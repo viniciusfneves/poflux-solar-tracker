@@ -33,16 +33,21 @@ void handleWSData(String message) {
         configs.manualSetpoint = (int)jsonM["manual_setpoint"];
     }
     if (jsonM.containsKey("adjust")) {
-        if (jsonM["adjust"].containsKey("pid")) {
-            if (jsonM["adjust"]["pid"].containsKey("kp")) {
-                pid.setKp(jsonM["adjust"]["pid"]["kp"].toDouble());
-            }
-            if (jsonM["adjust"]["pid"].containsKey("ki")) {
-                pid.setKi(jsonM["adjust"]["pid"]["ki"].toDouble());
-            }
-            if (jsonM["adjust"]["pid"].containsKey("kd")) {
-                pid.setKd(jsonM["adjust"]["pid"]["kd"].toDouble());
-            }
+        if (jsonM["adjust"].containsKey("kp")) {
+            pid.setKp(jsonM["adjust"]["kp"]);
+        }
+        if (jsonM["adjust"].containsKey("ki")) {
+            pid.setKi(jsonM["adjust"]["ki"]);
+        }
+        if (jsonM["adjust"].containsKey("kd")) {
+            pid.setKd(jsonM["adjust"]["kd"]);
+        }
+        if (jsonM["adjust"].containsKey("rtc")) {
+            const char *date = jsonM["adjust"]["rtc"]["date"];
+            const char *time = jsonM["adjust"]["rtc"]["time"];
+            Serial.println(date);
+            Serial.println(time);
+            dateTime = RtcDateTime(date, time);
         }
     }
 }
@@ -69,16 +74,16 @@ void broadcastLUXInfo(uint8_t interval) {
     if (micros() - lastBroadcastTimestamp < interval * 1000)
         return;
     StaticJsonDocument<1024> json;
-    String stringBuffer;
+    String                   stringBuffer;
 
-    json["RTC"]["day"] = dateTime.Day();
-    json["RTC"]["month"] = dateTime.Month();
-    json["RTC"]["year"] = dateTime.Year();
-    json["RTC"]["hour"] = dateTime.Hour();
+    json["RTC"]["day"]    = dateTime.Day();
+    json["RTC"]["month"]  = dateTime.Month();
+    json["RTC"]["year"]   = dateTime.Year();
+    json["RTC"]["hour"]   = dateTime.Hour();
     json["RTC"]["minute"] = dateTime.Minute();
     json["RTC"]["second"] = dateTime.Second();
 
-    json["MPU"]["lensAngle"] = mpu.data.roll;
+    json["MPU"]["lensAngle"]    = mpu.data.roll;
     json["MPU"]["trustedValue"] = mpu.data.isTrusted;
 
     switch (configs.mode) {
@@ -91,17 +96,17 @@ void broadcastLUXInfo(uint8_t interval) {
     }
 
     json["manualSetpoint"] = configs.manualSetpoint;
-    json["sunPosition"] = timeInfo.sunPosition();
+    json["sunPosition"]    = timeInfo.sunPosition();
 
-    json["PID_values"]["kp"] = pid.getKp();
-    json["PID_values"]["ki"] = pid.getKi();
-    json["PID_values"]["kd"] = pid.getKd();
-    json["PID_values"]["p"] = pid.getInstantP();
-    json["PID_values"]["i"] = pid.getInstantI();
-    json["PID_values"]["d"] = pid.getInstantD();
+    json["PID_values"]["kp"]     = pid.getKp();
+    json["PID_values"]["ki"]     = pid.getKi();
+    json["PID_values"]["kd"]     = pid.getKd();
+    json["PID_values"]["p"]      = pid.getInstantP();
+    json["PID_values"]["i"]      = pid.getInstantI();
+    json["PID_values"]["d"]      = pid.getInstantD();
     json["PID_values"]["output"] = pid.getOutput();
 
-    json["motor"]["pwm"] = motor.data.pwm;
+    json["motor"]["pwm"]       = motor.data.pwm;
     json["motor"]["direction"] = motor.data.direction;
 
     serializeJson(json, stringBuffer);

@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-#define TIME_T0_STABILIZE 350  // ms
+#define TIME_T0_STABILIZE 75000  // us
 
 class PID_Controller {
    private:
@@ -42,15 +42,15 @@ class PID_Controller {
     double getInstantD() { return _d; }
     int getOutput() { return (int)_output; }
 
-    int calculateOutput(double actualState, double target = 0., unsigned long time = millis()) {
+    int calculateOutput(double actualState, double target = 0., unsigned long time = micros()) {
         double error = actualState - target;
-        int dt = time - _lastRun;
+        unsigned long dt = time - _lastRun;
 
         if (abs(error) < _threshold) {
             if (_lastUnstableTimestamp + TIME_T0_STABILIZE > time)
-                this->reset();
+                reset();
             _p = 0;
-            _d = _kd * -_lastError / dt;
+            _d = _kd * -_lastError / (double)dt;
             _lastRun = time;
             _lastError = 0.;
             _output = 0;
@@ -58,10 +58,10 @@ class PID_Controller {
         }
 
         _p = _kp * error;
-        _i = _lastIntegrativeValue + (_ki * error * dt / 1000.0);
-        _d = _kd * (error - _lastError) / dt;
+        _i = _lastIntegrativeValue + (_ki * error * dt / 1000000.0);
+        _d = _kd * (error - _lastError) / ((double)dt / 1000000.0);
         _i = constrain(_i, -_integrativeLimit, _integrativeLimit);
-        //error = (KFE * error) + ((1 - KFE) * lastError);  //Filtra a variacao do erro para a derivada
+        // error = (KFE * error) + ((1 - KFE) * lastError);  //Filtra a variacao do erro para a derivada
 
         _lastUnstableTimestamp = time;
         _lastRun = time;
@@ -81,4 +81,4 @@ class PID_Controller {
     }
 };
 
-PID_Controller pid(1.7, 1, 450);
+PID_Controller pid(1.7, 1, 0.4);
