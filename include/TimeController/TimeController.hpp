@@ -29,7 +29,7 @@ class TimeController {
 
     void init() {
         rtc.Begin();                           //Inicialização do RTC DS3231
-        rtc.SetDateTime(dateTime);             //Configurando valores iniciais do RTC DS3231
+        //rtc.SetDateTime(dateTime);             //Configurando valores iniciais do RTC DS3231
         lord.TimeZone(_timezone * 60);         //Envio de informações para TimeLord
         lord.Position(_latitude, _longitude);  //
     }

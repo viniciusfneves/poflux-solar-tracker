@@ -1,6 +1,6 @@
 #pragma once
 
-#define SAMPLES 25
+#define SAMPLES 50
 
 class MovingAverage {
    private:
