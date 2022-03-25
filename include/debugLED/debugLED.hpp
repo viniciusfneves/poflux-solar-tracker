@@ -12,9 +12,15 @@ enum class LEDState {
     error
 };
 
-portMUX_TYPE debugKey = portMUX_INITIALIZER_UNLOCKED;
+LEDState debuggingLED;
 
-LEDState debuggingLED = LEDState::configuring;
+SemaphoreHandle_t LEDSemaphore = xSemaphoreCreateMutex();
+
+void updateLEDState(LEDState state) {
+    xSemaphoreTake(LEDSemaphore, portMAX_DELAY);
+    debuggingLED = state;
+    xSemaphoreGive(LEDSemaphore);
+}
 
 void setLED(LEDState state) {
     switch (state) {
@@ -38,30 +44,22 @@ void setLED(LEDState state) {
         default:
             digitalWrite(RUN_LED, LOW);
             digitalWrite(ERRO_LED, HIGH);
-            debuggingLED = LEDState::error;
+            updateLEDState(LEDState::error);
             break;
     }
 }
 
-void updateLEDState(LEDState state) {
-    portENTER_CRITICAL(&debugKey);
-    debuggingLED = state;
-    portEXIT_CRITICAL(&debugKey);
-}
-
 void ledHandler(void* _) {
-    while (1) {
+    for (;;) {
         static LEDState state;
-        static int controller = 0;
+        static int      controller = 0;
 
-        portENTER_CRITICAL(&debugKey);
         if (state == debuggingLED) {
             controller++;
         } else {
-            state = debuggingLED;
+            state      = debuggingLED;
             controller = 0;
         }
-        portEXIT_CRITICAL(&debugKey);
         if (controller == 6)
             controller = 0;
         if (controller == 0)

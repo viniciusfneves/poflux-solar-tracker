@@ -3,9 +3,9 @@
 #include <Arduino.h>
 #include <analogWrite.h>
 
-#define LPWM 4     //lpwm
-#define RPWM 2     //rpwm
-#define ENABLE 19  //pwm enable
+#define LPWM 4     // lpwm
+#define RPWM 2     // rpwm
+#define ENABLE 19  // pwm enable
 
 #define MIN_OUTPUT_PWM 180
 #define MAX_OUTPUT_PWM 255
@@ -13,10 +13,10 @@
 
 struct MotorData {
     uint8_t pwm;
-    String direction;
+    String  direction;
 
     void setMotorState(uint8_t _pwm, String _direction) {
-        pwm = _pwm;
+        pwm       = _pwm;
         direction = _direction;
     }
 };
@@ -52,8 +52,8 @@ class Motor {
 
     Motor(int enable_pin, int lpwm_pin, int rpwm_pin) {
         _enable = enable_pin;
-        _lpwm = lpwm_pin;
-        _rpwm = rpwm_pin;
+        _lpwm   = lpwm_pin;
+        _rpwm   = rpwm_pin;
     }
 
     void init() {
@@ -67,7 +67,7 @@ class Motor {
     }
 
     // Aciona o driver de motor
-    void commandMotor(int PWM) {
+    void command(int PWM) {
         if (PWM == 0)
             stop();
         else if (PWM < 0)
