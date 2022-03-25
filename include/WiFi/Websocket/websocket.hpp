@@ -12,9 +12,9 @@
 WebSocketsServer wss(81);  // Configura o serviço do WebSockets para a porta 81
 
 void handleWSServer(void *_) {
-    while (1) {
+    for (;;) {
         wss.loop();
-        vTaskDelay(2 / portTICK_PERIOD_MS);
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
 
@@ -43,11 +43,18 @@ void handleWSData(String message) {
             pid.setKd(jsonM["adjust"]["kd"]);
         }
         if (jsonM["adjust"].containsKey("rtc")) {
+            // {'adjust':{'rtc':{'date':"Mar 25 2022",'time':"01:50:07"}}}
             const char *date = jsonM["adjust"]["rtc"]["date"];
             const char *time = jsonM["adjust"]["rtc"]["time"];
-            Serial.println(date);
-            Serial.println(time);
-            dateTime = RtcDateTime(date, time);
+            dateTime         = RtcDateTime(date, time);
+            Serial.println(dateTime.IsValid());
+            Serial.println(dateTime.Day());
+            Serial.println(dateTime.Month());
+            Serial.println(dateTime.Year());
+            Serial.println(dateTime.Hour());
+            Serial.println(dateTime.Minute());
+            Serial.println(dateTime.Second());
+            // rtc.SetDateTime(dateTime);
         }
     }
 }
@@ -83,7 +90,7 @@ void broadcastLUXInfo(uint8_t interval) {
     json["RTC"]["minute"] = dateTime.Minute();
     json["RTC"]["second"] = dateTime.Second();
 
-    json["MPU"]["lensAngle"]    = mpu.data.roll;
+    json["MPU"]["lensAngle"]    = mpu.data.kalAngleX;
     json["MPU"]["trustedValue"] = mpu.data.isTrusted;
 
     switch (configs.mode) {

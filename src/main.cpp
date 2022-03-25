@@ -15,6 +15,8 @@
 #define PASSWORD "senha"
 
 void setup() {
+    updateLEDState(LEDState::configuring);
+
     // LEDs de DEBUG
     initLEDs();
 
@@ -38,15 +40,15 @@ void setup() {
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPCIONAL] -> ângulo atual da lente
-void adjustLens(int targetPosition, int currentPosition = mpu.data.roll) {
+void adjustLens(int targetPosition, int currentPosition = mpu.data.kalAngleX) {
     if (configs.mode == Mode::Manual)
         targetPosition = configs.manualSetpoint;
     currentPosition = constrain(currentPosition, -85, 85);
-    targetPosition = constrain(targetPosition, -80, 80);
+    targetPosition  = constrain(targetPosition, -80, 80);
 
     int output = pid.calculateOutput(currentPosition, targetPosition);
 
-    motor.commandMotor(output);
+    motor.command(output);
 }
 
 void loop() {

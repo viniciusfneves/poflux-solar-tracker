@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Kalman.h>
 #include <Wire.h>
 #include <math.h>
 
@@ -13,16 +14,21 @@
 #define RAW_TO_CELSIUS 340.
 #define SECONDS_TO_RECONNECT 1
 
-//Estutura para armazenar os dados do MPU
+Kalman kalmanX;  // Create the Kalman instances
+Kalman kalmanY;
+
+// Estutura para armazenar os dados do MPU
 struct MPUData {
-    double AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+    double AcX, AcY, AcZ, Tmp, GyXRate, GyYRate, GyZRate;
     double roll, pitch;
-    bool isTrusted = false;
+    bool   isTrusted = false;
+    double kalAngleX, kalAngleY;  // Ângulo usando filtro de Kalman
 };
 
 class MPU6050_Solar {
    private:
-    int _mpuAddress;
+    int           _mpuAddress;
+    unsigned long _timer = 0;
 
     void _debugI2CResponse(const byte errorCode) {
         switch (errorCode) {
@@ -49,7 +55,7 @@ class MPU6050_Solar {
     }
 
     void _handleErrors() {
-        motor.commandMotor(0);
+        motor.command(0);
         updateLEDState(LEDState::solving_error);
         reset();
     }
@@ -95,9 +101,12 @@ class MPU6050_Solar {
         if (response != 0)
             return false;
 
-        updateLEDState(LEDState::running);
         readMPU();
-        filter.setInitialValue(data.roll);  // Seta o valor inicial no filtro de média movel
+        _timer = micros();
+        kalmanX.setAngle(data.roll);  // Set starting angle
+        kalmanY.setAngle(data.pitch);
+
+        updateLEDState(LEDState::running);
 
         return true;
     }
@@ -137,7 +146,7 @@ class MPU6050_Solar {
             if (response != 0)
                 throw(response);
 
-            //Solicita os dados do sensor
+            // Solicita os dados do sensor
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
             if (responseLenght == 14) {
                 updateLEDState(LEDState::running);
@@ -145,30 +154,41 @@ class MPU6050_Solar {
             } else
                 throw "MPU ERROR: Falha na leitura do MPU";
 
-            //Armazena o valor dos registradores em um array
+            // Armazena o valor dos registradores em um array
             int16_t mpuRawData[7];
 
             for (int i = 0; i < 7; i++) {
                 mpuRawData[i] = Wire.read() << 8 | Wire.read();
             }
 
+            double dt = (double)(micros() - _timer) / 1000000;  // Calculate delta time
+            _timer    = micros();
+
             // Converte as unidades dos dados recebidos para as correspondentes
             // Aceleração  = G
             // Temperatura = Celsius
             // Gyro        = Rad/s
-            data.AcX = (float)mpuRawData[0] / RAW_TO_G;
-            data.AcY = (float)mpuRawData[1] / RAW_TO_G;
-            data.AcZ = (float)mpuRawData[2] / RAW_TO_G;
-            data.Tmp = (float)mpuRawData[3] / RAW_TO_CELSIUS + 35;
-            data.GyX = (float)mpuRawData[4] / RAW_TO_DEGREES_PER_SECOND;
-            data.GyY = (float)mpuRawData[5] / RAW_TO_DEGREES_PER_SECOND;
-            data.GyZ = (float)mpuRawData[6] / RAW_TO_DEGREES_PER_SECOND;
+            data.AcX     = (double)mpuRawData[0] / RAW_TO_G;
+            data.AcY     = (double)mpuRawData[1] / RAW_TO_G;
+            data.AcZ     = (double)mpuRawData[2] / RAW_TO_G;
+            data.Tmp     = (double)mpuRawData[3] / RAW_TO_CELSIUS + 35;
+            data.GyXRate = (double)mpuRawData[4] / RAW_TO_DEGREES_PER_SECOND;
+            data.GyYRate = (double)mpuRawData[5] / RAW_TO_DEGREES_PER_SECOND;
+            data.GyZRate = (double)mpuRawData[6] / RAW_TO_DEGREES_PER_SECOND;
 
-            int sigZ = data.AcZ < 0 ? -1 : 1;
+            data.roll  = atan2(data.AcY, data.AcZ) * RAD_TO_DEG;
+            data.pitch = atan(-data.AcX / sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) * RAD_TO_DEG;
 
-            data.roll = RAD_TO_DEG * atan2(data.AcY, sigZ * sqrt(data.AcZ * data.AcZ + data.AcX * data.AcX));
-            data.roll = filter.getAverage(data.roll);
-            //data.pitch = -RAD_TO_DEG * atan2(data.AcX, sqrt(data.AcZ * data.AcZ + data.AcY * data.AcY));
+            // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
+            if ((data.roll < -90 && data.kalAngleX > 90) || (data.roll > 90 && data.kalAngleX < -90)) {
+                kalmanX.setAngle(data.roll);
+            } else
+                data.kalAngleX = kalmanX.getAngle(data.roll, data.GyXRate, dt);  // Calculate the angle using a Kalman filter
+
+            if (abs(data.kalAngleX) > 90)
+                data.GyYRate = -data.GyYRate;  // Invert rate, so it fits the restriced accelerometer reading
+            data.kalAngleY = kalmanY.getAngle(data.pitch, data.GyYRate, dt);
+
         } catch (const byte e) {
             _debugI2CResponse(e);
             data.isTrusted = false;
