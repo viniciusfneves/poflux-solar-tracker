@@ -22,8 +22,8 @@ void startHTTPServer() {
     server.serveStatic("/pof-lux", LITTLEFS, "/pages/pof-lux/index.html").setAuthentication(AUTH_USER, AUTH_PASS);
     server.serveStatic("/style.css", LITTLEFS, "/pages/pof-lux/style.css");
     server.serveStatic("/info_display.css", LITTLEFS, "/pages/pof-lux/info_display.css");
-    server.serveStatic("/monitor_script.js", LITTLEFS, "/pages/pof-lux/monitor_script.js");
-    server.serveStatic("/scripts/websocket.js", LITTLEFS, "/scripts/websocket.js");
+    server.serveStatic("/monitor_script.js", LITTLEFS, "/scripts/monitor_script.js");
+    server.serveStatic("/websocket.js", LITTLEFS, "/scripts/websocket.js");
 
     server.onNotFound([](AsyncWebServerRequest *request) { request->send(404, "text/plain", "NOT FOUND"); });
 

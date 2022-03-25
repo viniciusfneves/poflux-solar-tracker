@@ -6,7 +6,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="stylesheet" href="style.css" />
 		<link rel="stylesheet" href="info_display.css" />
-		<script type="module" src="monitor_script.js"></script>
+		<script type="module" src="../../scripts/monitor_script.js"></script>
 		<title>Monitor POF LUX</title>
 	</head>
 	<body>
@@ -97,6 +97,10 @@
 					<h3 id="pid_output"></h3>
 				</div>
 			</div>
+		</div>
+		<div id="debug">
+			<input type="text" id="debug-message-text-field" placeholder="Digite aqui a mensagem JSON" />
+			<button id="debug-send-button">Send</button>
 		</div>
 	</body>
 </html>

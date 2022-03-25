@@ -1,12 +1,16 @@
-import { ws } from "../../scripts/websocket.js";
+import { ws } from "./websocket.js";
+
+window.onload = function () {
+	document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
+};
 
 ws.onmessage = function (response) {
 	let json = JSON.parse(response.data);
 
 	document.getElementById("lens_angle").innerHTML = json["MPU"]["lensAngle"].toFixed(1);
 	document.getElementById("sun_position").innerHTML = json["sunPosition"];
-	
-    document.getElementById("rtc_day").innerHTML = json["RTC"]["day"];
+
+	document.getElementById("rtc_day").innerHTML = json["RTC"]["day"];
 	document.getElementById("rtc_month").innerHTML = json["RTC"]["month"];
 	document.getElementById("rtc_year").innerHTML = json["RTC"]["year"];
 	document.getElementById("rtc_hour").innerHTML = json["RTC"]["hour"];
@@ -24,3 +28,9 @@ ws.onmessage = function (response) {
 	document.getElementById("D").innerHTML = json["PID_values"]["d"].toFixed(2);
 	document.getElementById("pid_output").innerHTML = json["PID_values"]["output"];
 };
+
+function sendCustomMessage() {
+	let message = document.getElementById("debug-message-text-field").value;
+	// document.getElementById("debug-message-text-field").value = "";
+	ws.send(message);
+}
