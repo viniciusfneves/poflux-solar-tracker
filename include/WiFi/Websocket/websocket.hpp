@@ -11,13 +11,6 @@
 
 WebSocketsServer wss(81);  // Configura o serviço do WebSockets para a porta 81
 
-void handleWSServer(void *_) {
-    for (;;) {
-        wss.loop();
-        vTaskDelay(1 / portTICK_PERIOD_MS);
-    }
-}
-
 void handleWSData(String message) {
     StaticJsonDocument<128> jsonM;
     deserializeJson(jsonM, message);
@@ -47,7 +40,6 @@ void handleWSData(String message) {
             const char *date = jsonM["adjust"]["rtc"]["date"];
             const char *time = jsonM["adjust"]["rtc"]["time"];
             dateTime         = RtcDateTime(date, time);
-            Serial.println(dateTime.IsValid());
             Serial.println(dateTime.Day());
             Serial.println(dateTime.Month());
             Serial.println(dateTime.Year());
@@ -119,6 +111,14 @@ void broadcastLUXInfo(uint8_t interval) {
     serializeJson(json, stringBuffer);
     wss.broadcastTXT(stringBuffer);
     lastBroadcastTimestamp = micros();
+}
+
+void handleWSServer(void *_) {
+    for (;;) {
+        wss.loop();
+        broadcastLUXInfo(configs.broadcastInterval);
+        vTaskDelay(1 / portTICK_PERIOD_MS);
+    }
 }
 
 void startWSS() {

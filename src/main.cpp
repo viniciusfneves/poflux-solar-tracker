@@ -56,6 +56,4 @@ void loop() {
     mpu.readMPU();
 
     adjustLens(timeInfo.sunPosition());
-
-    broadcastLUXInfo(configs.broadcastInterval);
 }
