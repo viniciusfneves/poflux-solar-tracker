@@ -124,5 +124,5 @@ void handleWSServer(void *_) {
 void startWSS() {
     wss.begin();
     wss.onEvent(handleWSEvent);
-    xTaskCreate(handleWSServer, "WS_Handler", 2048, NULL, 1, NULL);
+    xTaskCreate(handleWSServer, "WS_Handler", 1024 * 3, NULL, 1, NULL);
 }

@@ -13,6 +13,7 @@
 #define RAW_TO_DEGREES_PER_SECOND 131.
 #define RAW_TO_CELSIUS 340.
 #define SECONDS_TO_RECONNECT 1
+#define MPU_PWR_CTRL_PIN 15
 
 Kalman kalmanX;  // Create the Kalman instances
 Kalman kalmanY;
@@ -61,6 +62,8 @@ class MPU6050_Solar {
     }
 
     bool _init() {
+        digitalWrite(MPU_PWR_CTRL_PIN, HIGH);
+        delay(200);
         byte response;
         // -- Configurações gerais -- //
         Wire.beginTransmission(_mpuAddress);
@@ -120,6 +123,9 @@ class MPU6050_Solar {
 
     // --    Configura o MPU    -- //
     void init() {
+        pinMode(MPU_PWR_CTRL_PIN, OUTPUT);
+        digitalWrite(MPU_PWR_CTRL_PIN, LOW);
+        delay(200);
         if (!_init()) {
             updateLEDState(LEDState::error);
             for (int cont = 0; cont < SECONDS_TO_RECONNECT * 2; cont++) {
@@ -132,9 +138,9 @@ class MPU6050_Solar {
     }
 
     void reset() {
-        updateLEDState(LEDState::solving_error);
         while (!_init()) {
-            delay(100);
+            digitalWrite(MPU_PWR_CTRL_PIN, LOW);
+            delay(200);
         }
     }
 
