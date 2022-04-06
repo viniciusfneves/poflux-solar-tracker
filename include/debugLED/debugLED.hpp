@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-#define RUN_LED 26
-#define ERRO_LED 27
+#define RUN_LED 18
+#define ERRO_LED 19
 
 enum class LEDState {
     configuring,
