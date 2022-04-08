@@ -43,8 +43,8 @@ void setup() {
 void adjustLens(int targetPosition, int currentPosition = mpu.data.kalAngleX) {
     if (configs.mode == Mode::Manual)
         targetPosition = configs.manualSetpoint;
-    currentPosition = constrain(currentPosition, -85, 85);
-    targetPosition  = constrain(targetPosition, -80, 80);
+    currentPosition = constrain(currentPosition, -180, 180);
+    targetPosition  = constrain(targetPosition, -75, 75);
 
     int output = pid.calculateOutput(currentPosition, targetPosition);
 
