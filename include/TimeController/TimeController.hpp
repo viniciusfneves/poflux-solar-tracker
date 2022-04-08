@@ -7,6 +7,7 @@
 
 RtcDateTime        dateTime(__DATE__, __TIME__);  // Criação do objeto do tipo RTCDateTime iniciando com tempo do sistema
 RtcDS3231<TwoWire> rtc(Wire);                     // Criação do objeto do tipo DS3231
+SemaphoreHandle_t  RTCSemaphore = xSemaphoreCreateMutex();
 
 TimeLord lord;
 
@@ -29,12 +30,15 @@ class TimeController {
 
     void init() {
         rtc.Begin();  // Inicialização do RTC DS3231
-        // rtc.SetDateTime(dateTime);             //Configurando valores iniciais do RTC DS3231
         lord.TimeZone(_timezone * 60);  // Envio de informações para TimeLord
         lord.Position(_latitude, _longitude);
     }
 
-    void callRTC() { dateTime = rtc.GetDateTime(); /*Atualiza o horário*/ }
+    void callRTC() {
+        xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
+        dateTime = rtc.GetDateTime(); /*Atualiza o horário*/
+        xSemaphoreGive(RTCSemaphore);
+    }
 
     int sunPosition() {
         byte today[] = {dateTime.Second(), dateTime.Minute(), dateTime.Hour(), dateTime.Day(), dateTime.Month(), static_cast<byte>(dateTime.Year())};
