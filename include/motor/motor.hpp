@@ -3,9 +3,9 @@
 #include <Arduino.h>
 #include <analogWrite.h>
 
-#define LPWM 4     // lpwm
-#define RPWM 2     // rpwm
-#define ENABLE 19  // pwm enable
+#define LPWM 33    // lpwm
+#define RPWM 32    // rpwm
+#define ENABLE 25  // pwm enable
 
 #define MIN_OUTPUT_PWM 180
 #define MAX_OUTPUT_PWM 255
