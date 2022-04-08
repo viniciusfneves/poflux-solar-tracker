@@ -35,6 +35,9 @@ void handleWSData(String message) {
         if (jsonM["adjust"].containsKey("kd")) {
             pid.setKd(jsonM["adjust"]["kd"]);
         }
+        if (jsonM["adjust"].containsKey("error_threshold")) {
+            pid.setThreshold(jsonM["adjust"]["error_threshold"]);
+        }
         if (jsonM["adjust"].containsKey("rtc")) {
             // {'adjust':{'rtc':{'date':"Mar 25 2022",'time':"01:50:07"}}}
             const char *date = jsonM["adjust"]["rtc"]["date"];
@@ -46,7 +49,9 @@ void handleWSData(String message) {
             Serial.println(dateTime.Hour());
             Serial.println(dateTime.Minute());
             Serial.println(dateTime.Second());
-            // rtc.SetDateTime(dateTime);
+            xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
+            rtc.SetDateTime(dateTime);
+            xSemaphoreGive(RTCSemaphore);
         }
     }
 }
@@ -94,8 +99,9 @@ void broadcastLUXInfo(uint8_t interval) {
             break;
     }
 
-    json["manualSetpoint"] = configs.manualSetpoint;
-    json["sunPosition"]    = timeInfo.sunPosition();
+    json["manualSetpoint"]       = configs.manualSetpoint;
+    json["sunPosition"]          = timeInfo.sunPosition();
+    json["lens_error_threshold"] = pid.getThreshold();
 
     json["PID_values"]["kp"]     = pid.getKp();
     json["PID_values"]["ki"]     = pid.getKi();
