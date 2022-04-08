@@ -11,8 +11,8 @@
 #include <debugLED/debugLED.hpp>
 #include <motor/motor.hpp>
 
-#define SSID "rede"
-#define PASSWORD "senha"
+#define SSID "lif2"
+#define PASSWORD "fotonica"
 
 void setup() {
     updateLEDState(LEDState::configuring);

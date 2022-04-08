@@ -5,7 +5,6 @@
 #include <math.h>
 
 #include <debugLED/debugLED.hpp>
-#include <filters/moving_average.hpp>
 #include <motor/motor.hpp>
 
 #define RAW_TO_G 16384.
