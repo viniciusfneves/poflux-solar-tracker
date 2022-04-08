@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-#define TIME_T0_STABILIZE 75000  // us
+#define TIME_T0_STABILIZE 62000  // us
 
 class PID_Controller {
    private:
@@ -20,7 +20,7 @@ class PID_Controller {
    public:
     // O limite integrativo controlado pela variável integrativeLimit deve ser passado em porcentagem
     // Esse valor definirá qual porcentagem máxima de participação no output do controlador a constrante integrativa terá
-    PID_Controller(double kp, double ki, double kd, double threshold = 2.5, int integrativeLimitPercentage = 75) {
+    PID_Controller(double kp, double ki, double kd, double threshold = 1.5, int integrativeLimitPercentage = 75) {
         _integrativeLimitPercentage = (double)integrativeLimitPercentage / 100.;
         _threshold                  = threshold;
         _kp                         = kp;
@@ -32,10 +32,12 @@ class PID_Controller {
     void setKp(double kp) { _kp = kp; }
     void setKi(double ki) { _ki = ki; }
     void setKd(double kd) { _kd = kd; }
+    void setThreshold(double threshold) { _threshold = threshold; }
 
     double getKp() { return _kp; }
     double getKi() { return _ki; }
     double getKd() { return _kd; }
+    double getThreshold() { return _threshold; }
 
     double getInstantP() { return _p; }
     double getInstantI() { return _i; }
