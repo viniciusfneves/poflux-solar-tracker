@@ -43,12 +43,6 @@ void handleWSData(String message) {
             const char *date = jsonM["adjust"]["rtc"]["date"];
             const char *time = jsonM["adjust"]["rtc"]["time"];
             dateTime         = RtcDateTime(date, time);
-            Serial.println(dateTime.Day());
-            Serial.println(dateTime.Month());
-            Serial.println(dateTime.Year());
-            Serial.println(dateTime.Hour());
-            Serial.println(dateTime.Minute());
-            Serial.println(dateTime.Second());
             xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
             rtc.SetDateTime(dateTime);
             xSemaphoreGive(RTCSemaphore);

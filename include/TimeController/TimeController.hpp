@@ -29,15 +29,20 @@ class TimeController {
     }
 
     void init() {
-        rtc.Begin();  // Inicialização do RTC DS3231
+        rtc.Begin();                    // Inicialização do RTC DS3231
         lord.TimeZone(_timezone * 60);  // Envio de informações para TimeLord
         lord.Position(_latitude, _longitude);
     }
 
     void callRTC() {
-        xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
-        dateTime = rtc.GetDateTime(); /*Atualiza o horário*/
-        xSemaphoreGive(RTCSemaphore);
+        RtcDateTime rtcData = rtc.GetDateTime();
+        if (rtcData != RtcDateTime(0)) {
+            xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
+            dateTime = rtcData; /*Atualiza o horário*/
+            xSemaphoreGive(RTCSemaphore);
+        } else {
+            Serial.println("RTC ERRO");
+        }
     }
 
     int sunPosition() {
