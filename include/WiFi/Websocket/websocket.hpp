@@ -42,8 +42,8 @@ void handleWSData(String message) {
             // {'adjust':{'rtc':{'date':"Mar 25 2022",'time':"01:50:07"}}}
             const char *date = jsonM["adjust"]["rtc"]["date"];
             const char *time = jsonM["adjust"]["rtc"]["time"];
-            dateTime         = RtcDateTime(date, time);
             xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
+            dateTime = RtcDateTime(date, time);
             rtc.SetDateTime(dateTime);
             xSemaphoreGive(RTCSemaphore);
         }

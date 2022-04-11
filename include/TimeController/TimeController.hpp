@@ -40,9 +40,10 @@ class TimeController {
             xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
             dateTime = rtcData; /*Atualiza o horário*/
             xSemaphoreGive(RTCSemaphore);
-        } else {
-            Serial.println("RTC ERRO");
         }
+        // else {
+        //     Serial.println("RTC ERRO");
+        // }
     }
 
     int sunPosition() {
