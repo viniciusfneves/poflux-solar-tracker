@@ -14,8 +14,8 @@ WebSocketsServer wss(81);  // Configura o serviço do WebSockets para a porta 81
 void handleWSData(String message) {
     StaticJsonDocument<128> jsonM;
     deserializeJson(jsonM, message);
-    if (jsonM.containsKey("reset")) {
-        if (strcmp(jsonM["reset"], "true") == 0) {
+    if (jsonM.containsKey("command")) {
+        if (strcmp(jsonM["command"], "reset") == 0) {
             ESP.restart();
         }
     }

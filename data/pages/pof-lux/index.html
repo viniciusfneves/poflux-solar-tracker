@@ -11,6 +11,7 @@
 	</head>
 	<body>
 		<h3 id="connection_status">CLOSED</h3>
+		<h3 id="op-mode"></h3>
 		<div id="rtc_info">
 			<div class="inline_display">
 				<h3>Dia</h3>
@@ -46,6 +47,10 @@
 			<div class="inline_display">
 				<h3>Posição do Sol</h3>
 				<h3 id="sun_position"></h3>
+			</div>
+			<div class="inline_display">
+				<h3>Posição Manual</h3>
+				<h3 id="manual_position"></h3>
 			</div>
 		</div>
 
@@ -97,6 +102,10 @@
 					<h3 id="pid_output"></h3>
 				</div>
 			</div>
+		</div>
+		<div>
+			<button id="auto-mode-button">Auto</button>
+			<button id="manual-mode-button">Manual</button>
 		</div>
 		<div id="debug">
 			<input type="text" id="debug-message-text-field" placeholder="Digite aqui a mensagem JSON" />

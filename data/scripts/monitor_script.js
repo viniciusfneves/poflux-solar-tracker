@@ -2,13 +2,19 @@ import { ws } from "./websocket.js";
 
 window.onload = function () {
 	document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
+	document.getElementById("auto-mode-button").addEventListener("click", (_) => sendConfigMessage("{'mode':'auto'}"));
+	document
+		.getElementById("manual-mode-button")
+		.addEventListener("click", (_) => sendConfigMessage("{'mode':'manual'}"));
 };
 
 ws.onmessage = function (response) {
 	let json = JSON.parse(response.data);
 
-	document.getElementById("lens_angle").innerHTML = json["MPU"]["lensAngle"].toFixed(1);
+	document.getElementById("op-mode").innerHTML = json["mode"].toUpperCase();
 	document.getElementById("sun_position").innerHTML = json["sunPosition"];
+	document.getElementById("manual_position").innerHTML = json["manualSetpoint"];
+	document.getElementById("lens_angle").innerHTML = json["MPU"]["lensAngle"].toFixed(1);
 
 	document.getElementById("rtc_day").innerHTML = json["RTC"]["day"];
 	document.getElementById("rtc_month").innerHTML = json["RTC"]["month"];
@@ -32,5 +38,8 @@ ws.onmessage = function (response) {
 function sendCustomMessage() {
 	let message = document.getElementById("debug-message-text-field").value;
 	// document.getElementById("debug-message-text-field").value = "";
+	ws.send(message);
+}
+function sendConfigMessage(message) {
 	ws.send(message);
 }
