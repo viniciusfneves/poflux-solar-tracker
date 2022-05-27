@@ -8,6 +8,7 @@
 #include <configurations/configurations.hpp>
 #include <mpu/MPU.hpp>
 #include <pid/PID_Controller.hpp>
+#include <tracking/tracking_handler.hpp>
 
 #define AUTH_USER "user"
 #define AUTH_PASS "admin"
@@ -20,6 +21,10 @@ void startHTTPServer() {
     server.on("/", [](AsyncWebServerRequest *request) { request->redirect("/pof-lux"); });
 
     server.serveStatic("/pof-lux", LITTLEFS, "/pages/pof-lux/index.html").setAuthentication(AUTH_USER, AUTH_PASS);
+    server.on("/pof-lux/tracking", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(LITTLEFS, "/tracking/tracking.csv", "text/csv"); });
+    server.on("/pof-lux/clear_tracking", HTTP_GET, [](AsyncWebServerRequest *request) { 
+        clearTrackingData();
+        request->redirect("/pof-lux"); });
     server.serveStatic("/style.css", LITTLEFS, "/pages/pof-lux/style.css");
     server.serveStatic("/info_display.css", LITTLEFS, "/pages/pof-lux/info_display.css");
     server.serveStatic("/scripts/monitor_script.js", LITTLEFS, "/scripts/monitor_script.js");

@@ -10,6 +10,7 @@
 #include <configurations/configurations.hpp>
 #include <debugLED/debugLED.hpp>
 #include <motor/motor.hpp>
+#include <tracking/tracking_handler.hpp>
 
 #define SSID "lif2"
 #define PASSWORD "fotonica"
@@ -51,7 +52,15 @@ void adjustLens(int targetPosition, int currentPosition = mpu.data.kalAngleX) {
     motor.command(output);
 }
 
+int64_t ESPtimestamp     = 0;
+int64_t lastESPtimestamp = 0;
+
 void loop() {
+    ESPtimestamp = esp_timer_get_time() / 1000;
+    if (ESPtimestamp - lastESPtimestamp >= 10000) {
+        writeDataToTrackingFile(dateTime.Epoch32Time(), timeInfo.sunPosition(), mpu.data.kalAngleX);
+        lastESPtimestamp = ESPtimestamp;
+    }
     timeInfo.callRTC();
     mpu.readMPU();
 
