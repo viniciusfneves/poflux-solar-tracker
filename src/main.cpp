@@ -31,8 +31,8 @@ void setup() {
 
     //-------- Sensores --------//
     timeInfo.init();
-    motor.init();
     mpu.init();
+    motor.init();
 
     // Se as configurações forem concluídas com sucesso, atualiza o estado do programa nos LEDs de DEBUG
     updateLEDState(LEDState::running);

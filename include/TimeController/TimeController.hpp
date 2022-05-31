@@ -34,16 +34,15 @@ class TimeController {
         lord.Position(_latitude, _longitude);
     }
 
+    int timezone() { return _timezone; };
+
     void callRTC() {
         RtcDateTime rtcData = rtc.GetDateTime();
-        if (rtcData != RtcDateTime(0)) {
+        if (rtcData.IsValid()) {
             xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
             dateTime = rtcData; /*Atualiza o horário*/
             xSemaphoreGive(RTCSemaphore);
         }
-        // else {
-        //     Serial.println("RTC ERRO");
-        // }
     }
 
     int sunPosition() {

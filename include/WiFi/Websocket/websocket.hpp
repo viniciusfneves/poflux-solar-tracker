@@ -79,6 +79,8 @@ void broadcastLUXInfo(uint8_t interval) {
     StaticJsonDocument<1024> json;
     String                   stringBuffer;
 
+    // TODO = Transformar a informação para horário EPOCH
+    // TODO: E fazer a conversão no javascript do front-end
     json["RTC"]["day"]    = dateTime.Day();
     json["RTC"]["month"]  = dateTime.Month();
     json["RTC"]["year"]   = dateTime.Year();
