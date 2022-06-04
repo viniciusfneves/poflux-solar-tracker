@@ -1,17 +1,27 @@
 import { ws } from "./websocket.js";
 
 window.onload = function () {
-	document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
 	document.getElementById("auto-mode-button").addEventListener("click", (_) => sendConfigMessage("{'mode':'auto'}"));
 	document
 		.getElementById("manual-mode-button")
 		.addEventListener("click", (_) => sendConfigMessage("{'mode':'manual'}"));
+	document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
+	document.getElementById("download-tracking-file").addEventListener("click", (_) => window.location.href = "pof-lux/tracking");
+	document.getElementById("clear-tracking-file").addEventListener("click", (_) => window.location.href = "pof-lux/clear_tracking");
 };
+
+function setOpMode(mode) {
+	var buttons = document.getElementsByClassName("mode-button");
+	for (var i = 0, len = buttons.length; i < len; i++) {
+		buttons[i].style.backgroundColor = "gray";
+	}
+	document.getElementById(mode + "-mode-button").style.backgroundColor = "green";
+}
 
 ws.onmessage = function (response) {
 	let json = JSON.parse(response.data);
 
-	document.getElementById("op-mode").innerHTML = json["mode"].toUpperCase();
+	setOpMode(json["mode"]);
 	document.getElementById("sun_position").innerHTML = json["sunPosition"];
 	document.getElementById("manual_position").innerHTML = json["manualSetpoint"];
 	document.getElementById("lens_angle").innerHTML = json["MPU"]["lensAngle"].toFixed(1);
@@ -23,7 +33,7 @@ ws.onmessage = function (response) {
 	document.getElementById("rtc_minute").innerHTML = json["RTC"]["minute"];
 	document.getElementById("rtc_second").innerHTML = json["RTC"]["second"];
 
-	document.getElementById("motor_pwm").innerHTML = json["motor"]["pwm"];
+	document.getElementById("motor_pwm").innerHTML = (json["motor"]["pwm"] / 2.55).toFixed(1) + "%";
 	document.getElementById("motor_direction").innerHTML = json["motor"]["direction"];
 
 	document.getElementById("kp").innerHTML = json["PID_values"]["kp"];
@@ -37,7 +47,6 @@ ws.onmessage = function (response) {
 
 function sendCustomMessage() {
 	let message = document.getElementById("debug-message-text-field").value;
-	// document.getElementById("debug-message-text-field").value = "";
 	ws.send(message);
 }
 function sendConfigMessage(message) {

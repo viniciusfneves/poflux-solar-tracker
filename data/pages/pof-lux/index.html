@@ -10,8 +10,12 @@
 		<title>Monitor POF LUX</title>
 	</head>
 	<body>
-		<h3 id="connection_status">CLOSED</h3>
-		<h3 id="op-mode"></h3>
+		<h3 id="connection_status">Status: Sem conexão</h3>
+		<h3 id="op-mode">Modo de Operação</h3>
+		<div>
+			<button class="mode-button" id="auto-mode-button">Auto</button>
+			<button class="mode-button" id="manual-mode-button">Manual</button>
+		</div>
 		<div id="rtc_info">
 			<div class="inline_display">
 				<h3>Dia</h3>
@@ -56,10 +60,9 @@
 
 		<div id="motor_info">
 			<div class="inline_display">
-				<h3>Potência</h3>
+				<h3>Potência do Motor</h3>
 				<h3 id="motor_pwm"></h3>
 			</div>
-
 			<div class="inline_display">
 				<h3>Direção</h3>
 				<h3 id="motor_direction"></h3>
@@ -71,12 +74,10 @@
 					<h3>Kp</h3>
 					<h3 id="kp"></h3>
 				</div>
-
 				<div class="inline_display">
 					<h3>Ki</h3>
 					<h3 id="ki"></h3>
 				</div>
-
 				<div class="inline_display">
 					<h3>Kd</h3>
 					<h3 id="kd"></h3>
@@ -87,12 +88,10 @@
 					<h3>P</h3>
 					<h3 id="P"></h3>
 				</div>
-
 				<div class="inline_display">
 					<h3>I</h3>
 					<h3 id="I"></h3>
 				</div>
-
 				<div class="inline_display">
 					<h3>D</h3>
 					<h3 id="D"></h3>
@@ -103,9 +102,10 @@
 				</div>
 			</div>
 		</div>
-		<div>
-			<button id="auto-mode-button">Auto</button>
-			<button id="manual-mode-button">Manual</button>
+		<div id="tracking-options">
+			<h3>Controle de dados - LIF Remoto</h3>
+			<button class="inline_display" id="download-tracking-file">Baixar dados</button>
+			<button class="inline_display" id="clear-tracking-file">Apagar dados</button>
 		</div>
 		<div id="debug">
 			<input type="text" id="debug-message-text-field" placeholder="Digite aqui a mensagem JSON" />

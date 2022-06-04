@@ -7,10 +7,45 @@ html {
 	font-family: Helvetica;
 	margin: 0 auto;
 	text-align: center;
-	background-color: rgb(40, 40, 40);
-	color: white;
+	background-color: rgb(223, 223, 223);
+	color: black;
 }
 
 body {
-	margin-top: 50px;
+	margin-top: 20px;
+}
+
+button {
+	font-weight: 600;
+	margin: 10px;
+	padding: 10px 20px;
+	border-radius: 10px;
+}
+
+.mode-button {
+	color: white;
+	background-color: gray;
+}
+
+#download-tracking-file {
+	color: white;
+	background-color: darkcyan;
+}
+#clear-tracking-file {
+	color: white;
+	background-color: crimson;
+}
+
+#debug-message-text-field {
+	width: 42%;
+	font-size: medium;
+	text-align: center;
+	border-radius: 5px;
+	border-color: black;
+	padding: 5px;
+}
+
+#debug-send-button {
+	color: black;
+	background-color: lightseagreen;
 }
