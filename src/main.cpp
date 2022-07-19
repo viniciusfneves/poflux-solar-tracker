@@ -10,10 +10,7 @@
 #include <configurations/configurations.hpp>
 #include <debugLED/debugLED.hpp>
 #include <motor/motor.hpp>
-#include <tracking/tracking_handler.hpp>
-
-#define SSID "lif2"
-#define PASSWORD "fotonica"
+#include <tracking_file/tracking_file_handler.hpp>
 
 void setup() {
     updateLEDState(LEDState::configuring);
@@ -22,7 +19,7 @@ void setup() {
     initLEDs();
 
     //---------WIFI---------//
-    wifiConnect(SSID, PASSWORD);
+    connectToWifiNetwork();
     startHTTPServer();
     startWSS();
 

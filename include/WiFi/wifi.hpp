@@ -3,9 +3,11 @@
 #include <ESPmDNS.h>
 #include <WiFi.h>
 
-void wifiConnect(const char* ssid, const char* password, const char* dnsName = "lif") {
+#include <credentials/credentials.hpp>
+
+void connectToWifiNetwork(const char* dnsName = "lif") {
     WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
+    WiFi.begin(WIFI_SSID_CREDENTIALS, WIFI_PASSWORD_CREDENTIALS);
 
     MDNS.begin(dnsName);
 }
