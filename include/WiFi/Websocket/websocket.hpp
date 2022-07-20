@@ -8,6 +8,7 @@
 #include <PID/PID_Controller.hpp>
 #include <TimeController/TimeController.hpp>
 #include <configurations/configurations.hpp>
+#include <ftp_client/ftp_client.hpp>
 
 WebSocketsServer wss(81);  // Configura o serviço do WebSockets para a porta 81
 
@@ -17,6 +18,9 @@ void handleWSData(String message) {
     if (jsonM.containsKey("command")) {
         if (strcmp(jsonM["command"], "reset") == 0) {
             ESP.restart();
+        }
+        if (strcmp(jsonM["command"], "lif_upload") == 0) {
+            upload_tracking_file_to_chronos();
         }
     }
     if (jsonM.containsKey("mode")) {
