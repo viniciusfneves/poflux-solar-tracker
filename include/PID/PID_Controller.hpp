@@ -20,7 +20,7 @@ class PID_Controller {
    public:
     // O limite integrativo controlado pela variável integrativeLimit deve ser passado em porcentagem
     // Esse valor definirá qual porcentagem máxima de participação no output do controlador a constrante integrativa terá
-    PID_Controller(double kp, double ki, double kd, double threshold = 1.5, int integrativeLimitPercentage = 75) {
+    PID_Controller(double kp, double ki, double kd, double threshold = 1.7, int integrativeLimitPercentage = 75) {
         _integrativeLimitPercentage = (double)integrativeLimitPercentage / 100.;
         _threshold                  = threshold;
         _kp                         = kp;
