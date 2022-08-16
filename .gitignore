@@ -1,3 +1,5 @@
 .pio
 .vscode
-credentials.hpp
+credentials.*
+*.csv
+Scripts/tracking files/
