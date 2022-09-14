@@ -36,20 +36,24 @@ class MPU6050_Solar {
                 Serial.printf("MPU: Sucesso!");
                 break;
             case 1:
-                Serial.printf("MPU ERROR: Mensagem grande demais para o buffer");
+                Serial.printf(
+                    "MPU ERROR: Mensagem grande demais para o buffer");
                 break;
             case 2:
-                Serial.printf("MPU ERROR: NACK recebido no endereço de transmissão");
+                Serial.printf(
+                    "MPU ERROR: NACK recebido no endereço de transmissão");
                 break;
             case 3:
-                Serial.printf("MPU ERROR: NACK recebido ao transmitir a mensagem");
+                Serial.printf(
+                    "MPU ERROR: NACK recebido ao transmitir a mensagem");
                 break;
             case 4:
                 Serial.printf("MPU ERROR: Erro genérico...");
                 break;
 
             default:
-                Serial.printf("MPU ERROR: %02d - Código de erro desconhecido", errorCode);
+                Serial.printf("MPU ERROR: %02d - Código de erro desconhecido",
+                              errorCode);
                 break;
         }
     }
@@ -69,39 +73,35 @@ class MPU6050_Solar {
         Wire.write(0x19);  // Registro SMPLRT_DIV
         Wire.write(0);
         response = Wire.endTransmission();
-        if (response != 0)
-            return false;
+        if (response != 0) return false;
 
         Wire.beginTransmission(_mpuAddress);
         Wire.write(0x1A);  // Registro CONFIG
         Wire.write(0);
         response = Wire.endTransmission();
-        if (response != 0)
-            return false;
+        if (response != 0) return false;
 
         // -- Configuração do Gyro -- //
         Wire.beginTransmission(_mpuAddress);
         Wire.write(0x1B);  // Registro de configuração do Gyro
-        Wire.write(0);     // Configura o Full Scale Range para + ou - 250 graus por segundo
+        Wire.write(0);     // Configura o Full Scale Range para + ou - 250 graus
+                           // por segundo
         response = Wire.endTransmission();
-        if (response != 0)
-            return false;
+        if (response != 0) return false;
 
         // -- Configuração do Acelerômetro -- //
         Wire.beginTransmission(_mpuAddress);
         Wire.write(0x1C);  // Registro de configuração do Accel
         Wire.write(0);     // Configura o Full Scale Range para + ou - 2gs
         response = Wire.endTransmission();
-        if (response != 0)
-            return false;
+        if (response != 0) return false;
 
         // Ativa o MPU
         Wire.beginTransmission(_mpuAddress);
         Wire.write(0x6B);  // Registro PWR_MGMT_1
         Wire.write(0);     // Ativa o MPU-6050
         response = Wire.endTransmission();
-        if (response != 0)
-            return false;
+        if (response != 0) return false;
 
         readMPU();
         _timer = micros();
@@ -114,9 +114,7 @@ class MPU6050_Solar {
     }
 
    public:
-    MPU6050_Solar(int MPUAddress) {
-        _mpuAddress = MPUAddress;
-    }
+    MPU6050_Solar(int MPUAddress) { _mpuAddress = MPUAddress; }
 
     MPUData data;
 
@@ -146,10 +144,10 @@ class MPU6050_Solar {
     void readMPU() {
         try {
             Wire.beginTransmission(_mpuAddress);
-            Wire.write(0x3B);  // Começa a leitura abaixo no endereço do registrador 0x3B (ACCEL_XOUT_H)
+            Wire.write(0x3B);  // Começa a leitura abaixo no endereço do
+                               // registrador 0x3B (ACCEL_XOUT_H)
             byte response = Wire.endTransmission(false);
-            if (response != 0)
-                throw(response);
+            if (response != 0) throw(response);
 
             // Solicita os dados do sensor
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
@@ -165,8 +163,8 @@ class MPU6050_Solar {
             for (int i = 0; i < 7; i++) {
                 mpuRawData[i] = Wire.read() << 8 | Wire.read();
             }
-
-            double dt = (double)(micros() - _timer) / 1000000;  // Calculate delta time
+            // Delta time
+            double dt = (double)(micros() - _timer) / 1000000;
             _timer    = micros();
 
             // Converte as unidades dos dados recebidos para as correspondentes
@@ -182,16 +180,23 @@ class MPU6050_Solar {
             data.GyZRate = (double)mpuRawData[6] / RAW_TO_DEGREES_PER_SECOND;
 
             data.roll  = atan2(data.AcY, data.AcZ) * RAD_TO_DEG;
-            data.pitch = atan(-data.AcX / sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) * RAD_TO_DEG;
+            data.pitch = atan(-data.AcX /
+                              sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) *
+                         RAD_TO_DEG;
 
-            // This fixes the transition problem when the accelerometer angle jumps between -180 and 180 degrees
-            if ((data.roll < -90 && data.kalAngleX > 90) || (data.roll > 90 && data.kalAngleX < -90)) {
+            // This fixes the transition problem when the accelerometer angle
+            // jumps between -180 and 180 degrees
+            if ((data.roll < -90 && data.kalAngleX > 90) ||
+                (data.roll > 90 && data.kalAngleX < -90)) {
                 kalmanX.setAngle(data.roll);
             } else
-                data.kalAngleX = kalmanX.getAngle(data.roll, data.GyXRate, dt);  // Calculate the angle using a Kalman filter
+                // Angle using a Kalman filter
+                data.kalAngleX = kalmanX.getAngle(data.roll, data.GyXRate, dt);
 
             if (abs(data.kalAngleX) > 90)
-                data.GyYRate = -data.GyYRate;  // Invert rate, so it fits the restriced accelerometer reading
+                data.GyYRate =
+                    -data.GyYRate;  // Invert rate, so it fits the restriced
+                                    // accelerometer reading
             data.kalAngleY = kalmanY.getAngle(data.pitch, data.GyYRate, dt);
 
         } catch (const byte e) {

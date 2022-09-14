@@ -31,16 +31,21 @@ void setup() {
     mpu.init();
     motor.init();
 
-    // Se as configurações forem concluídas com sucesso, atualiza o estado do programa nos LEDs de DEBUG
+    // Se as configurações forem concluídas com sucesso, atualiza o estado do
+    // programa nos LEDs de DEBUG
     updateLEDState(LEDState::running);
 }
 
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPCIONAL] -> ângulo atual da lente
-void adjustLens(int targetPosition, int currentPosition = mpu.data.kalAngleX) {
+void adjustLens(int targetPosition  = timeInfo.sunPosition(),
+                int currentPosition = mpu.data.kalAngleX) {
     if (configs.mode == Mode::Manual)
         targetPosition = configs.manualSetpoint;
+    else if (configs.mode == Mode::Cicle)
+        targetPosition = timeInfo.ciclePosition(currentPosition);
+
     currentPosition = constrain(currentPosition, -180, 180);
     targetPosition  = constrain(targetPosition, -75, 75);
 
@@ -54,5 +59,5 @@ void loop() {
     timeInfo.callRTC();
     mpu.readMPU();
 
-    adjustLens(timeInfo.sunPosition());
+    adjustLens();
 }

@@ -30,6 +30,9 @@ void handleWSData(String message) {
         if (strcmp(jsonM["mode"], "manual") == 0) {
             configs.mode = Mode::Manual;
         }
+        if (strcmp(jsonM["mode"], "cicle") == 0) {
+            configs.mode = Mode::Cicle;
+        }
     }
     if (jsonM.containsKey("manual_setpoint")) {
         configs.manualSetpoint = (int)jsonM["manual_setpoint"];
@@ -56,6 +59,9 @@ void handleWSData(String message) {
             rtc.SetDateTime(dateTime);
             xSemaphoreGive(RTCSemaphore);
         }
+    }
+    if (jsonM.containsKey("cicle_time")) {
+        configs.cicleTime = constrain((int)jsonM["cicle_time"], 1, 10);
     }
 }
 
@@ -102,9 +108,14 @@ void broadcastLUXInfo(uint8_t interval) {
         case Mode::Manual:
             json["mode"] = "manual";
             break;
+        case Mode::Cicle:
+            json["mode"] = "cicle";
+            break;
     }
 
     json["manualSetpoint"]       = configs.manualSetpoint;
+    json["cicleSetpoint"]        = timeInfo.getCicleSetpoint();
+    json["cicleTime"]            = configs.cicleTime;
     json["sunPosition"]          = timeInfo.sunPosition();
     json["lens_error_threshold"] = pid.getThreshold();
 

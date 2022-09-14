@@ -5,12 +5,7 @@
 #define RUN_LED 18
 #define ERRO_LED 19
 
-enum class LEDState {
-    configuring,
-    running,
-    solving_error,
-    error
-};
+enum class LEDState { configuring, running, solving_error, error };
 
 LEDState debuggingLED;
 
@@ -60,10 +55,8 @@ void ledHandler(void* _) {
             state      = debuggingLED;
             controller = 0;
         }
-        if (controller == 6)
-            controller = 0;
-        if (controller == 0)
-            setLED(state);
+        if (controller == 6) controller = 0;
+        if (controller == 0) setLED(state);
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
