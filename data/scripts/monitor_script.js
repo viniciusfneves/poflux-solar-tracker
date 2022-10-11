@@ -1,21 +1,24 @@
 import { ws } from "./websocket.js";
 
 window.onload = function () {
-	document.getElementById("auto-mode-button").addEventListener("click", (_) => sendConfigMessage("{'mode':'auto'}"));
-	document
-		.getElementById("manual-mode-button")
-		.addEventListener("click", (_) => sendConfigMessage("{'mode':'manual'}"));
+	document.getElementById("auto-btn").addEventListener("click", (_) => sendConfigMessage("{'mode':'auto'}"));
+	document.getElementById("manual-btn").addEventListener("click", (_) => sendConfigMessage("{'mode':'manual'}"));
+	document.getElementById("halt-btn").addEventListener("click", (_) => sendConfigMessage("{'mode':'halt'}"));
 	document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
-	document.getElementById("download-tracking-file").addEventListener("click", (_) => window.location.href = "pof-lux/tracking");
-	document.getElementById("clear-tracking-file").addEventListener("click", (_) => window.location.href = "pof-lux/clear_tracking");
+	document
+		.getElementById("download-tracking-file")
+		.addEventListener("click", (_) => (window.location.href = "pof-lux/tracking"));
+	document
+		.getElementById("clear-tracking-file")
+		.addEventListener("click", (_) => (window.location.href = "pof-lux/clear_tracking"));
 };
 
 function setOpMode(mode) {
-	var buttons = document.getElementsByClassName("mode-button");
+	var buttons = document.getElementsByClassName("mode-btn");
 	for (var i = 0, len = buttons.length; i < len; i++) {
 		buttons[i].style.backgroundColor = "gray";
 	}
-	document.getElementById(mode + "-mode-button").style.backgroundColor = "green";
+	document.getElementById(mode + "-btn").style.backgroundColor = "green";
 }
 
 ws.onmessage = function (response) {

@@ -4,112 +4,125 @@
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+			integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+			crossorigin="anonymous"
+		/>
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+			integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+			crossorigin="anonymous"
+		></script>
+
 		<link rel="stylesheet" href="style.css" />
 		<link rel="stylesheet" href="info_display.css" />
 		<script type="module" src="../../scripts/monitor_script.js"></script>
 		<title>Monitor POF LUX</title>
 	</head>
 	<body>
-		<h3 id="connection_status">Status: Sem conexão</h3>
+		<h4 class="mt-4" id="connection_status">Status: Sem conexão</h4>
 		<h3 id="op-mode">Modo de Operação</h3>
 		<div>
-			<button class="mode-button" id="auto-mode-button">Auto</button>
-			<button class="mode-button" id="manual-mode-button">Manual</button>
+			<button type="button" class="btn btn-success btn-lg m-2 mode-btn" id="auto-btn">AUTO</button>
+			<button type="button" class="btn btn-success btn-lg m-2 mode-btn" id="manual-btn">MANUAL</button>
+			<button type="button" class="btn btn-danger btn-lg m-2 mode-btn" id="halt-btn">HALT</button>
 		</div>
 		<div id="rtc_info">
 			<div class="inline_display">
-				<h3>Dia</h3>
-				<h3 id="rtc_day"></h3>
+				<h5>Dia</h5>
+				<h5 id="rtc_day"></h5>
 			</div>
 			<div class="inline_display">
-				<h3>Mês</h3>
-				<h3 id="rtc_month"></h3>
+				<h5>Mês</h5>
+				<h5 id="rtc_month"></h5>
 			</div>
 			<div class="inline_display">
-				<h3>Ano</h3>
-				<h3 id="rtc_year"></h3>
+				<h5>Ano</h5>
+				<h5 id="rtc_year"></h5>
 			</div>
 			<div class="inline_display">
-				<h3>Hora</h3>
-				<h3 id="rtc_hour"></h3>
+				<h5>Hora</h5>
+				<h5 id="rtc_hour"></h5>
 			</div>
 			<div class="inline_display">
-				<h3>Minuto</h3>
-				<h3 id="rtc_minute"></h3>
+				<h5>Minuto</h5>
+				<h5 id="rtc_minute"></h5>
 			</div>
 			<div class="inline_display">
-				<h3>Segundo</h3>
-				<h3 id="rtc_second"></h3>
+				<h5>Segundo</h5>
+				<h5 id="rtc_second"></h5>
 			</div>
 		</div>
 
 		<div id="lens_info">
 			<div class="inline_display">
-				<h3>Angulo da Lente</h3>
-				<h3 id="lens_angle"></h3>
+				<h5>Angulo da Lente</h5>
+				<h5 id="lens_angle"></h5>
 			</div>
 			<div class="inline_display">
-				<h3>Posição do Sol</h3>
-				<h3 id="sun_position"></h3>
+				<h5>Posição do Sol</h5>
+				<h5 id="sun_position"></h5>
 			</div>
 			<div class="inline_display">
-				<h3>Posição Manual</h3>
-				<h3 id="manual_position"></h3>
+				<h5>Posição Manual</h5>
+				<h5 id="manual_position"></h5>
 			</div>
 		</div>
 
 		<div id="motor_info">
 			<div class="inline_display">
-				<h3>Potência do Motor</h3>
-				<h3 id="motor_pwm"></h3>
+				<h5>Potência do Motor</h5>
+				<h5 id="motor_pwm"></h5>
 			</div>
 			<div class="inline_display">
-				<h3>Direção</h3>
-				<h3 id="motor_direction"></h3>
+				<h5>Direção</h5>
+				<h5 id="motor_direction"></h5>
 			</div>
 		</div>
 		<div id="pid_info">
 			<div>
 				<div class="inline_display">
-					<h3>Kp</h3>
-					<h3 id="kp"></h3>
+					<h5>Kp</h5>
+					<h5 id="kp"></h5>
 				</div>
 				<div class="inline_display">
-					<h3>Ki</h3>
-					<h3 id="ki"></h3>
+					<h5>Ki</h5>
+					<h5 id="ki"></h5>
 				</div>
 				<div class="inline_display">
-					<h3>Kd</h3>
-					<h3 id="kd"></h3>
+					<h5>Kd</h5>
+					<h5 id="kd"></h5>
 				</div>
 			</div>
 			<div>
 				<div class="inline_display">
-					<h3>P</h3>
-					<h3 id="P"></h3>
+					<h5>P</h5>
+					<h5 id="P"></h5>
 				</div>
 				<div class="inline_display">
-					<h3>I</h3>
-					<h3 id="I"></h3>
+					<h5>I</h5>
+					<h5 id="I"></h5>
 				</div>
 				<div class="inline_display">
-					<h3>D</h3>
-					<h3 id="D"></h3>
+					<h5>D</h5>
+					<h5 id="D"></h5>
 				</div>
 				<div class="inline_display">
-					<h3>Output</h3>
-					<h3 id="pid_output"></h3>
+					<h5>Output</h5>
+					<h5 id="pid_output"></h5>
 				</div>
 			</div>
 		</div>
 		<div id="tracking-options">
 			<h3>Controle de dados - LIF Remoto</h3>
-			<button class="inline_display" id="download-tracking-file">Baixar dados</button>
-			<button class="inline_display" id="clear-tracking-file">Apagar dados</button>
+			<button type="button" class="btn btn-success btn-lg m-2" id="download-tracking-file">Baixar Dados</button>
+			<button type="button" class="btn btn-danger btn-lg m-2" id="clear-tracking-file">Apagar Dados</button>
 		</div>
 		<div id="debug">
 			<input type="text" id="debug-message-text-field" placeholder="Digite aqui a mensagem JSON" />
-			<button id="debug-send-button">Send</button>
+			<button type="button" class="btn btn-primary btn-lg m-2" id="debug-send-button">SEND</button>
 		</div>
 	</body>
 </html>
