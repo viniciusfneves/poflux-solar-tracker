@@ -13,15 +13,9 @@
 #include <tracking_file/tracking_file_handler.hpp>
 
 void setup() {
-    updateLEDState(LEDState::configuring);
-
     // LEDs de DEBUG
     initLEDs();
-
-    //---------WIFI---------//
-    connectToWifiNetwork();
-    startHTTPServer();
-    startWSS();
+    updateLEDState(LEDState::configuring);
 
     //-------- I2C --------//
     Wire.begin();
@@ -30,6 +24,11 @@ void setup() {
     timeInfo.init();
     mpu.init();
     motor.init();
+
+    //---------WIFI---------//
+    connectToWifiNetwork();
+    startHTTPServer();
+    startWSS();
 
     // Se as configurações forem concluídas com sucesso, atualiza o estado do
     // programa nos LEDs de DEBUG

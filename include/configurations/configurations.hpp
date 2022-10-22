@@ -1,6 +1,6 @@
 #pragma once
 
-enum class Mode { Auto, Manual, Cicle };
+enum class Mode { Auto, Manual, Cicle, Halt };
 
 struct Configs {
     Mode    mode              = Mode::Auto;
