@@ -25,9 +25,9 @@
 		<h4 class="mt-4" id="connection_status">Status: Sem conexão</h4>
 		<h3 id="op-mode">Modo de Operação</h3>
 		<div>
-			<button type="button" class="btn btn-success btn-lg m-2 mode-btn" id="auto-btn">AUTO</button>
-			<button type="button" class="btn btn-success btn-lg m-2 mode-btn" id="manual-btn">MANUAL</button>
-			<button type="button" class="btn btn-danger btn-lg m-2 mode-btn" id="halt-btn">HALT</button>
+			<button type="button" class="btn btn-success btn-lg m-2 mode-btn border-0" id="auto-btn">AUTO</button>
+			<button type="button" class="btn btn-success btn-lg m-2 mode-btn border-0" id="manual-btn">MANUAL</button>
+			<button type="button" class="btn btn-danger btn-lg m-2 mode-btn border-0" id="halt-btn">HALT</button>
 		</div>
 		<div id="rtc_info">
 			<div class="inline_display">
@@ -117,12 +117,13 @@
 		</div>
 		<div id="tracking-options">
 			<h3>Controle de dados - LIF Remoto</h3>
-			<button type="button" class="btn btn-success btn-lg m-2" id="download-tracking-file">Baixar Dados</button>
-			<button type="button" class="btn btn-danger btn-lg m-2" id="clear-tracking-file">Apagar Dados</button>
+			<button type="button" class="btn btn-primary btn-lg m-2 border-0" id="download-tracking-file">Baixar Dados</button>
+			<button type="button" class="btn btn-danger btn-lg m-2 border-0" id="clear-tracking-file">Apagar Dados</button>
 		</div>
-		<div id="debug">
+		<!-- <div id="debug">
+			<h3>Debug</h3>
 			<input type="text" id="debug-message-text-field" placeholder="Digite aqui a mensagem JSON" />
-			<button type="button" class="btn btn-primary btn-lg m-2" id="debug-send-button">SEND</button>
-		</div>
+			<button type="button" class="btn btn-lg m-2 border-0" id="debug-send-button">SEND</button>
+		</div> -->
 	</body>
 </html>

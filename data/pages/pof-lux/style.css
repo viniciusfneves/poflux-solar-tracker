@@ -13,15 +13,6 @@ body {
 	background-color: rgb(223, 223, 223);
 }
 
-#download-tracking-file {
-	color: white;
-	background-color: darkcyan;
-}
-#clear-tracking-file {
-	color: white;
-	background-color: crimson;
-}
-
 #debug-message-text-field {
 	width: 40%;
 	font-size: large;
@@ -32,5 +23,6 @@ body {
 }
 
 #debug-send-button {
+	color: white;
 	background-color: lightseagreen;
 }

@@ -1,16 +1,22 @@
 import { ws } from "./websocket.js";
 
 window.onload = function () {
-	document.getElementById("auto-btn").addEventListener("click", (_) => sendConfigMessage("{'mode':'auto'}"));
-	document.getElementById("manual-btn").addEventListener("click", (_) => sendConfigMessage("{'mode':'manual'}"));
-	document.getElementById("halt-btn").addEventListener("click", (_) => sendConfigMessage("{'mode':'halt'}"));
-	document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
+	document
+		.getElementById("auto-btn")
+		.addEventListener("click", (_) => sendConfigMessage("{'mode':'auto'}"));
+	document
+		.getElementById("manual-btn")
+		.addEventListener("click", (_) => sendConfigMessage("{'mode':'manual'}"));
+	document
+		.getElementById("halt-btn")
+		.addEventListener("click", (_) => sendConfigMessage("{'mode':'halt'}"));
 	document
 		.getElementById("download-tracking-file")
 		.addEventListener("click", (_) => (window.location.href = "pof-lux/tracking"));
 	document
 		.getElementById("clear-tracking-file")
 		.addEventListener("click", (_) => (window.location.href = "pof-lux/clear_tracking"));
+	// document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
 };
 
 function setOpMode(mode) {
@@ -18,7 +24,11 @@ function setOpMode(mode) {
 	for (var i = 0, len = buttons.length; i < len; i++) {
 		buttons[i].style.backgroundColor = "gray";
 	}
-	document.getElementById(mode + "-btn").style.backgroundColor = "green";
+	if (mode + "-btn" == "halt-btn") {
+		document.getElementById(mode + "-btn").style.backgroundColor = "#dc3545";
+	} else {
+		document.getElementById(mode + "-btn").style.backgroundColor = "#198754";
+	}
 }
 
 ws.onmessage = function (response) {
@@ -36,7 +46,8 @@ ws.onmessage = function (response) {
 	document.getElementById("rtc_minute").innerHTML = json["RTC"]["minute"];
 	document.getElementById("rtc_second").innerHTML = json["RTC"]["second"];
 
-	document.getElementById("motor_pwm").innerHTML = (json["motor"]["pwm"] / 2.55).toFixed(1) + "%";
+	document.getElementById("motor_pwm").innerHTML =
+		(json["motor"]["pwm"] / 2.55).toFixed(1) + "%";
 	document.getElementById("motor_direction").innerHTML = json["motor"]["direction"];
 
 	document.getElementById("kp").innerHTML = json["PID_values"]["kp"];
