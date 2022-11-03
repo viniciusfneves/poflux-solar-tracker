@@ -12,6 +12,10 @@
 #include <motor/motor.hpp>
 #include <tracking_file/tracking_file_handler.hpp>
 
+#define DAMPING_ANGLE 32.
+#define MAX_DAMPING_FACTOR .75
+#define DUMPING_STRECH 1.5
+
 void setup() {
     // LEDs de DEBUG
     initLEDs();
@@ -48,8 +52,29 @@ void adjustLens(int targetPosition  = timeInfo.sunPosition(),
     currentPosition = constrain(currentPosition, -180, 180);
     targetPosition  = constrain(targetPosition, -75, 75);
 
-    int output = pid.calculateOutput(currentPosition, targetPosition);
+    double dampingFactor;
+    int    output = pid.calculateOutput(currentPosition, targetPosition);
 
+    if (output > 0) {
+        if (currentPosition >= 0) {
+            output = output * MAX_DAMPING_FACTOR;
+        } else if (currentPosition > -DAMPING_ANGLE) {
+            dampingFactor =
+                constrain(abs(currentPosition) * DUMPING_STRECH / DAMPING_ANGLE,
+                          MAX_DAMPING_FACTOR, 1.);
+            output = output * dampingFactor;
+        }
+
+    } else {
+        if (currentPosition <= 0) {
+            output = output * MAX_DAMPING_FACTOR;
+        } else if (currentPosition < DAMPING_ANGLE) {
+            dampingFactor =
+                constrain(abs(currentPosition) * DUMPING_STRECH / DAMPING_ANGLE,
+                          MAX_DAMPING_FACTOR, 1.);
+            output = output * dampingFactor;
+        }
+    }
     motor.command(output);
 }
 

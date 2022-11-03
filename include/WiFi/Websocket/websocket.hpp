@@ -12,7 +12,7 @@
 WebSocketsServer wss(81);  // Configura o serviço do WebSockets para a porta 81
 
 void handleWSData(String message) {
-    StaticJsonDocument<128> jsonM;
+    StaticJsonDocument<1024> jsonM;
     deserializeJson(jsonM, message);
     if (jsonM.containsKey("command")) {
         if (strcmp(jsonM["command"], "reset") == 0) {

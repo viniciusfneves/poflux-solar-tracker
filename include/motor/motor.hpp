@@ -9,8 +9,8 @@
 #define RPWM 32    // rpwm
 #define ENABLE 25  // pwm enable
 
-#define MIN_OUTPUT_PWM 180
-#define MAX_OUTPUT_PWM 255
+#define MIN_OUTPUT_PWM 170
+#define MAX_OUTPUT_PWM 235
 #define pwmMap(value) map(value, 1, 255, MIN_OUTPUT_PWM, MAX_OUTPUT_PWM)
 
 struct MotorData {

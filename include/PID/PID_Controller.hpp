@@ -6,16 +6,16 @@
 
 class PID_Controller {
    private:
-    double        _kp, _ki, _kd;
-    double        _p, _i, _d, _output;
-    int           _outputLimit = 100;
-    int           _integrativeLimit;
-    double        _integrativeLimitPercentage;
-    double        _threshold;
-    double        _lastError             = 0.;
-    double        _lastIntegrativeValue  = 0.;
-    unsigned long _lastRun               = 0UL;
-    unsigned long _lastUnstableTimestamp = 0UL;
+    double  _kp, _ki, _kd;
+    double  _p, _i, _d, _output;
+    int     _outputLimit = 100;
+    int     _integrativeLimit;
+    double  _integrativeLimitPercentage;
+    double  _threshold;
+    double  _lastError             = 0.;
+    double  _lastIntegrativeValue  = 0.;
+    int64_t _lastRun               = 0UL;
+    int64_t _lastUnstableTimestamp = 0UL;
 
    public:
     // O limite integrativo controlado pela variável integrativeLimit deve ser
@@ -23,7 +23,7 @@ class PID_Controller {
     // participação no output do controlador a constrante integrativa terá
     PID_Controller(double kp, double ki, double kd, double threshold = 1.7,
                    int integrativeLimitPercentage = 75) {
-        _integrativeLimitPercentage = (double)integrativeLimitPercentage / 100.;
+        _integrativeLimitPercentage = integrativeLimitPercentage / 100.;
         _threshold                  = threshold;
         _kp                         = kp;
         _ki                         = ki;
@@ -47,9 +47,9 @@ class PID_Controller {
     int    getOutput() { return (int)_output; }
 
     int calculateOutput(double actualState, double target = 0.,
-                        unsigned long time = micros()) {
+                        int64_t time = esp_timer_get_time()) {
         double error = actualState - target;
-        double dt    = (double)(time - _lastRun) / 1000000.;
+        double dt    = (time - _lastRun) / 1000000.;
 
         if (abs(error) < _threshold) {
             if (_lastUnstableTimestamp + TIME_T0_STABILIZE > time) reset();
