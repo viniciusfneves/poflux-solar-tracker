@@ -1,15 +1,30 @@
 import { ws } from "./websocket.js";
 
+var modified = false;
+var ticks = 0;
+
 window.onload = function () {
 	document
 		.getElementById("auto-btn")
-		.addEventListener("click", (_) => sendConfigMessage("{'mode':'auto'}"));
+		.addEventListener("click", (_) => ws.send("{'mode':'auto'}"));
 	document
 		.getElementById("manual-btn")
-		.addEventListener("click", (_) => sendConfigMessage("{'mode':'manual'}"));
+		.addEventListener("click", (_) => ws.send("{'mode':'manual'}"));
 	document
 		.getElementById("halt-btn")
-		.addEventListener("click", (_) => sendConfigMessage("{'mode':'halt'}"));
+		.addEventListener("click", (_) => ws.send("{'mode':'halt'}"));
+	document.getElementById("adjust_rtc").oninput = function () {
+		modified = true;
+		ticks = 0;
+	};
+	document.getElementById("rtc-set-btn").addEventListener("click", (_) => {
+		let value = document.getElementById("adjust_rtc").value;
+		let dateObj = new Date(value);
+		let date = dateObj.toDateString();
+		date = date.substring(date.indexOf(" ") + 1);
+		let time = value.substring(value.lastIndexOf("T") + 1);
+		ws.send(`{'adjust':{'rtc':{'date':'${date}','time':'${time}'}}}`);
+	});
 	document
 		.getElementById("download-tracking-file")
 		.addEventListener("click", (_) => (window.location.href = "pof-lux/tracking"));
@@ -17,6 +32,21 @@ window.onload = function () {
 		.getElementById("clear-tracking-file")
 		.addEventListener("click", (_) => (window.location.href = "pof-lux/clear_tracking"));
 	// document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
+
+	setInterval(() => {
+		if (!modified) {
+			var now = new Date();
+			now = now.toISOString();
+			var nowStr = now.substring(0, now.lastIndexOf("."));
+			document.getElementById("adjust_rtc").value = nowStr;
+		} else {
+			ticks++;
+			if (ticks > 15) {
+				modified = false;
+				ticks = 0;
+			}
+		}
+	}, 1000);
 };
 
 function setOpMode(mode) {
@@ -46,9 +76,10 @@ ws.onmessage = function (response) {
 	document.getElementById("rtc_minute").innerHTML = json["RTC"]["minute"];
 	document.getElementById("rtc_second").innerHTML = json["RTC"]["second"];
 
-	document.getElementById("motor_pwm").innerHTML =
-		(json["motor"]["pwm"] / 2.55).toFixed(1) + "%";
-	document.getElementById("motor_direction").innerHTML = json["motor"]["direction"];
+	let motor_percentage = (json["motor"]["pwm"] / 2.55).toFixed(1);
+	document.getElementById("motor-pwr-bar").innerHTML = motor_percentage + "%";
+	document.getElementById("motor-pwr-bar").style.width = motor_percentage + "%";
+	//document.getElementById("motor_direction").innerHTML = json["motor"]["direction"];
 
 	document.getElementById("kp").innerHTML = json["PID_values"]["kp"];
 	document.getElementById("ki").innerHTML = json["PID_values"]["ki"];
@@ -61,8 +92,5 @@ ws.onmessage = function (response) {
 
 function sendCustomMessage() {
 	let message = document.getElementById("debug-message-text-field").value;
-	ws.send(message);
-}
-function sendConfigMessage(message) {
 	ws.send(message);
 }

@@ -13,6 +13,11 @@ body {
 	background-color: rgb(223, 223, 223);
 }
 
+#motor-pwr-progress{
+	width: 50%;
+	max-width: 550px;
+}
+
 #debug-message-text-field {
 	width: 40%;
 	font-size: large;
