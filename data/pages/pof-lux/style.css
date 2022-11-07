@@ -10,12 +10,35 @@ html {
 }
 
 body {
-	background-color: rgb(223, 223, 223);
+	background-color: rgb(240, 240, 240);
 }
 
-#motor-pwr-progress{
+#motor-pwr-progress {
+	height: 12px;
 	width: 50%;
 	max-width: 550px;
+}
+
+#motor-pwr-bar {
+	border-radius: 25px;
+	/* this will do the magic */
+	-webkit-mask: linear-gradient(#fff 0 0);
+	mask: linear-gradient(#fff 0 0);
+}
+#motor-pwr-bar::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: linear-gradient(
+		90deg,
+		rgb(29, 170, 0) 35%,
+		rgb(247, 255, 50) 50%,
+		rgb(227, 144, 0) 65%,
+		rgb(221, 0, 0) 75%
+	);
 }
 
 #debug-message-text-field {
