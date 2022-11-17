@@ -13,8 +13,8 @@
 #include <tracking_file/tracking_file_handler.hpp>
 
 #define DAMPING_ANGLE 32.
-#define MAX_DAMPING_FACTOR .75
-#define DUMPING_STRECH 1.5
+#define MAX_DAMPING_FACTOR .5
+#define DUMPING_STRECH 1.2
 
 void setup() {
     // LEDs de DEBUG

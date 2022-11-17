@@ -1,5 +1,7 @@
 #pragma once
 
+#include <LittleFS.h>
+
 #include <TimeController/TimeController.hpp>
 
 SemaphoreHandle_t xTrackingFileSemaphore = xSemaphoreCreateMutex();
@@ -8,7 +10,7 @@ void writeDataToTrackingFile(uint32_t timestamp, int sunPosition,
                              double lensAngle) {
     timestamp -= timeInfo.timezone() * 3600;  // Converte para o horário GMT
     xSemaphoreTake(xTrackingFileSemaphore, portMAX_DELAY);
-    File trackFile = LITTLEFS.open("/tracking/tracking.csv", "a+");
+    File trackFile = LittleFS.open("/tracking/tracking.csv", "a+");
     trackFile.print("REM1,");
     trackFile.print(timestamp);
     trackFile.print(",");
@@ -29,7 +31,7 @@ void writeDataToTrackingFile(uint32_t timestamp, int sunPosition,
 
 void clearTrackingData() {
     xSemaphoreTake(xTrackingFileSemaphore, portMAX_DELAY);
-    File trackFile = LITTLEFS.open("/tracking/tracking.csv", "w");
+    File trackFile = LittleFS.open("/tracking/tracking.csv", "w");
     trackFile.println("Channel name,Timestamp,Value");
     trackFile.close();
     xSemaphoreGive(xTrackingFileSemaphore);

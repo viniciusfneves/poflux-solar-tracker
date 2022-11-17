@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WebSocketsServer.h>
+#include <time.h>
 
 #include <MPU/MPU.hpp>
 #include <PID/PID_Controller.hpp>
@@ -50,13 +51,23 @@ void handleWSData(String message) {
             pid.setThreshold(jsonM["adjust"]["error_threshold"].as<double>());
         }
         if (jsonM["adjust"].containsKey("rtc")) {
-            // {'adjust':{'rtc':{'date':"Mar 25 2022",'time':"01:50:07"}}}
-            const char *date = jsonM["adjust"]["rtc"]["date"];
-            const char *time = jsonM["adjust"]["rtc"]["time"];
-            xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
-            dateTime = RtcDateTime(date, time);
-            rtc.SetDateTime(dateTime);
-            xSemaphoreGive(RTCSemaphore);
+            // {'adjust':{'rtc':{'date':"Mar 25
+            // 2022",'time':"01:50:07","timestamp":}}}
+            if (jsonM["adjust"]["rtc"].containsKey("date") &&
+                jsonM["adjust"]["rtc"].containsKey("time")) {
+                const char *date = jsonM["adjust"]["rtc"]["date"];
+                const char *time = jsonM["adjust"]["rtc"]["time"];
+                xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
+                dateTime = RtcDateTime(date, time);
+                rtc.SetDateTime(dateTime);
+                xSemaphoreGive(RTCSemaphore);
+            }
+            if (jsonM["adjust"]["rtc"].containsKey("timestamp")) {
+                timeval time;
+                time.tv_sec  = jsonM["adjust"]["rtc"]["timestamp"];
+                time.tv_usec = 0;
+                settimeofday(&time, NULL);
+            }
         }
     }
     if (jsonM.containsKey("cicle_time")) {
@@ -84,6 +95,7 @@ void broadcastLUXInfo(uint8_t interval) {
 
     // TODO = Transformar a informação para horário EPOCH
     // TODO: E fazer a conversão no javascript do front-end
+    json["RTC"] = time(NULL);
     json["RTC"]["day"]    = dateTime.Day();
     json["RTC"]["month"]  = dateTime.Month();
     json["RTC"]["year"]   = dateTime.Year();

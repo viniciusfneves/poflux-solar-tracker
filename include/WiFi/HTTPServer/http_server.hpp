@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ESPAsyncWebServer.h>
-#include <LITTLEFS.h>
+#include <LittleFS.h>
 #include <WiFi.h>
 
 #include <TimeController/TimeController.hpp>
@@ -16,18 +16,17 @@
 AsyncWebServer server(80);
 
 void startHTTPServer() {
-    LITTLEFS.begin();
+    LittleFS.begin();
 
     server.on("/", [](AsyncWebServerRequest *request) {
         request->redirect("/pof-lux");
     });
 
-    server.serveStatic("/pof-lux", LITTLEFS, "/pages/pof-lux/index.html")
-        .setAuthentication(AUTH_USER, AUTH_PASS);
+    server.serveStatic("/pof-lux", LittleFS, "/pages/pof-lux/index.html");
 
     server.on("/pof-lux/tracking", HTTP_GET,
               [](AsyncWebServerRequest *request) {
-                  request->send(LITTLEFS, "/tracking/tracking.csv", "text/csv");
+                  request->send(LittleFS, "/tracking/tracking.csv", "text/csv");
               });
 
     server.on("/pof-lux/clear_tracking", HTTP_GET,
@@ -36,15 +35,15 @@ void startHTTPServer() {
                   request->redirect("/pof-lux");
               });
 
-    server.serveStatic("/style.css", LITTLEFS, "/pages/pof-lux/style.css");
+    server.serveStatic("/style.css", LittleFS, "/pages/pof-lux/style.css");
 
-    server.serveStatic("/info_display.css", LITTLEFS,
+    server.serveStatic("/info_display.css", LittleFS,
                        "/pages/pof-lux/info_display.css");
 
-    server.serveStatic("/scripts/monitor_script.js", LITTLEFS,
+    server.serveStatic("/scripts/monitor_script.js", LittleFS,
                        "/scripts/monitor_script.js");
 
-    server.serveStatic("/scripts/websocket.js", LITTLEFS,
+    server.serveStatic("/scripts/websocket.js", LittleFS,
                        "/scripts/websocket.js");
 
     server.onNotFound([](AsyncWebServerRequest *request) {
