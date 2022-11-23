@@ -22,7 +22,7 @@ class PID_Controller {
     // passado em porcentagem. Esse valor definirá qual porcentagem máxima de
     // participação no output do controlador a constrante integrativa terá
     PID_Controller(double kp, double ki, double kd, double threshold = 1.7,
-                   int integrativeLimitPercentage = 75) {
+                   int integrativeLimitPercentage = 90) {
         _integrativeLimitPercentage = integrativeLimitPercentage / 100.;
         _threshold                  = threshold;
         _kp                         = kp;
@@ -47,14 +47,16 @@ class PID_Controller {
     int    getOutput() { return (int)_output; }
 
     int calculateOutput(double actualState, double target = 0.,
-                        int64_t time = esp_timer_get_time()) {
+                        double  stateVariation = 0.,
+                        int64_t time           = esp_timer_get_time()) {
         double error = actualState - target;
         double dt    = (time - _lastRun) / 1000000.;
 
         if (abs(error) < _threshold) {
             if (_lastUnstableTimestamp + TIME_T0_STABILIZE > time) reset();
             _p         = 0;
-            _d         = (_kd * -_lastError) / dt;
+            _i         = 0;
+            _d         = stateVariation;
             _lastRun   = time;
             _lastError = 0.;
             _output    = 0;
@@ -63,7 +65,7 @@ class PID_Controller {
 
         _p = _kp * error;
         _i = _lastIntegrativeValue + (_ki * error * dt);
-        _d = _kd * (error - _lastError) / dt;
+        _d = stateVariation;
         _i = constrain(_i, -_integrativeLimit, _integrativeLimit);
         // Filtra a variacao do erro para a derivada
         // error = (KFE * error) + ((1 - KFE) * lastError);
@@ -86,4 +88,4 @@ class PID_Controller {
     }
 };
 
-PID_Controller pid(0.6, 0.3, 0.23);
+PID_Controller pid(0.7, 0.3, 0.40);

@@ -20,10 +20,9 @@ window.onload = function () {
 	document.getElementById("rtc-set-btn").addEventListener("click", (_) => {
 		let value = document.getElementById("adjust_rtc").value;
 		let dateObj = new Date(value);
-		let date = dateObj.toDateString();
-		date = date.substring(date.indexOf(" ") + 1);
-		let time = value.substring(value.lastIndexOf("T") + 1);
-		ws.send(`{'adjust':{'rtc':{'date':'${date}','time':'${time}'}}}`);
+		let date = dateObj.getTime();
+		console.log(`{'adjust':{'rtc':${date / 1000}}}`);
+		//ws.send(`{'adjust':{'rtc':${date/1000}}}`);
 	});
 	document
 		.getElementById("download-tracking-file")
@@ -64,19 +63,21 @@ function setOpMode(mode) {
 ws.onmessage = function (response) {
 	let json = JSON.parse(response.data);
 
+	let now = new Date(json["RTC"] * 1000);
+
 	setOpMode(json["mode"]);
 	document.getElementById("sun_position").innerHTML = json["sunPosition"];
 	document.getElementById("manual_position").innerHTML = json["manualSetpoint"];
 	document.getElementById("lens_angle").innerHTML = json["MPU"]["lensAngle"].toFixed(1);
 
-	document.getElementById("rtc_day").innerHTML = json["RTC"]["day"];
-	document.getElementById("rtc_month").innerHTML = json["RTC"]["month"];
-	document.getElementById("rtc_year").innerHTML = json["RTC"]["year"];
-	document.getElementById("rtc_hour").innerHTML = json["RTC"]["hour"];
-	document.getElementById("rtc_minute").innerHTML = json["RTC"]["minute"];
-	document.getElementById("rtc_second").innerHTML = json["RTC"]["second"];
+	document.getElementById("rtc_day").innerHTML = json["RTC"];
+	// document.getElementById("rtc_month").innerHTML = now.getUTCMonth();
+	document.getElementById("rtc_year").innerHTML = now.getFullYear();
+	// document.getElementById("rtc_hour").innerHTML = now.getHours();
+	// document.getElementById("rtc_minute").innerHTML = now.getMinutes();
+	// document.getElementById("rtc_second").innerHTML = now.getSeconds();
 
-	let motor_percentage = (json["motor"]["pwm"] / 2.55).toFixed(1);
+	let motor_percentage = (json["motor"] / 2.55).toFixed(1);
 	document.getElementById("motor-pwr-bar").innerHTML = motor_percentage + "%";
 	document.getElementById("motor-pwr-bar").style.width = motor_percentage + "%";
 	//document.getElementById("motor_direction").innerHTML = json["motor"]["direction"];

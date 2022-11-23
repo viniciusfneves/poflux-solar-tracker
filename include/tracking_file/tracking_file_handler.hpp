@@ -8,7 +8,6 @@ SemaphoreHandle_t xTrackingFileSemaphore = xSemaphoreCreateMutex();
 
 void writeDataToTrackingFile(uint32_t timestamp, int sunPosition,
                              double lensAngle) {
-    timestamp -= timeInfo.timezone() * 3600;  // Converte para o horário GMT
     xSemaphoreTake(xTrackingFileSemaphore, portMAX_DELAY);
     File trackFile = LittleFS.open("/tracking/tracking.csv", "a+");
     trackFile.print("REM1,");

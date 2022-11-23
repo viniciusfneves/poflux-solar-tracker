@@ -12,9 +12,9 @@
 #include <motor/motor.hpp>
 #include <tracking_file/tracking_file_handler.hpp>
 
-#define DAMPING_ANGLE 32.
-#define MAX_DAMPING_FACTOR .5
-#define DUMPING_STRECH 1.2
+#define DAMPING_ANGLE 30.
+#define MAX_DAMPING_FACTOR .6
+#define DUMPING_STRECH 1.
 
 void setup() {
     // LEDs de DEBUG
@@ -44,6 +44,11 @@ void setup() {
 // int currentePosition [OPCIONAL] -> ângulo atual da lente
 void adjustLens(int targetPosition  = timeInfo.sunPosition(),
                 int currentPosition = mpu.data.kalAngleX) {
+    if (configs.mode == Mode::Halt) {
+        pid.reset();
+        motor.command(0);
+        return;
+    }
     if (configs.mode == Mode::Manual)
         targetPosition = configs.manualSetpoint;
     else if (configs.mode == Mode::Cicle)
@@ -56,19 +61,23 @@ void adjustLens(int targetPosition  = timeInfo.sunPosition(),
     int    output = pid.calculateOutput(currentPosition, targetPosition);
 
     if (output > 0) {
-        if (currentPosition >= 0) {
+        if (currentPosition <= 0) {
             output = output * MAX_DAMPING_FACTOR;
-        } else if (currentPosition > -DAMPING_ANGLE) {
+            Serial.println(
+                "DAMPING STATE: MAX - output > 0 & currentPosition <=0")
+        } else if (currentPosition < DAMPING_ANGLE) {
             dampingFactor =
                 constrain(abs(currentPosition) * DUMPING_STRECH / DAMPING_ANGLE,
                           MAX_DAMPING_FACTOR, 1.);
             output = output * dampingFactor;
+            Serial.print("DAMPING STATE: ");
+            Serial.print(dampingFactor);
+            Serial.println(" - output > 0 & currentPosition < DAMPING_ANGLE");
         }
-
     } else {
-        if (currentPosition <= 0) {
+        if (currentPosition >= 0) {
             output = output * MAX_DAMPING_FACTOR;
-        } else if (currentPosition < DAMPING_ANGLE) {
+        } else if (currentPosition > -DAMPING_ANGLE) {
             dampingFactor =
                 constrain(abs(currentPosition) * DUMPING_STRECH / DAMPING_ANGLE,
                           MAX_DAMPING_FACTOR, 1.);

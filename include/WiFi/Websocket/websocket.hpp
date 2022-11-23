@@ -51,23 +51,16 @@ void handleWSData(String message) {
             pid.setThreshold(jsonM["adjust"]["error_threshold"].as<double>());
         }
         if (jsonM["adjust"].containsKey("rtc")) {
-            // {'adjust':{'rtc':{'date':"Mar 25
-            // 2022",'time':"01:50:07","timestamp":}}}
-            if (jsonM["adjust"]["rtc"].containsKey("date") &&
-                jsonM["adjust"]["rtc"].containsKey("time")) {
-                const char *date = jsonM["adjust"]["rtc"]["date"];
-                const char *time = jsonM["adjust"]["rtc"]["time"];
-                xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
-                dateTime = RtcDateTime(date, time);
-                rtc.SetDateTime(dateTime);
-                xSemaphoreGive(RTCSemaphore);
-            }
-            if (jsonM["adjust"]["rtc"].containsKey("timestamp")) {
-                timeval time;
-                time.tv_sec  = jsonM["adjust"]["rtc"]["timestamp"];
-                time.tv_usec = 0;
-                settimeofday(&time, NULL);
-            }
+            // {'adjust':{'rtc':Epoch64Time}}
+            int64_t timestamp = jsonM["adjust"]["rtc"];
+            xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
+            dateTime.InitWithEpoch64Time(timestamp);
+            rtc.SetDateTime(dateTime);
+            xSemaphoreGive(RTCSemaphore);
+            timeval _date;
+            _date.tv_sec  = timestamp;
+            _date.tv_usec = 0;
+            settimeofday(&_date, NULL);
         }
     }
     if (jsonM.containsKey("cicle_time")) {
@@ -93,15 +86,8 @@ void broadcastLUXInfo(uint8_t interval) {
     StaticJsonDocument<1024> json;
     String                   stringBuffer;
 
-    // TODO = Transformar a informação para horário EPOCH
-    // TODO: E fazer a conversão no javascript do front-end
-    json["RTC"] = time(NULL);
-    json["RTC"]["day"]    = dateTime.Day();
-    json["RTC"]["month"]  = dateTime.Month();
-    json["RTC"]["year"]   = dateTime.Year();
-    json["RTC"]["hour"]   = dateTime.Hour();
-    json["RTC"]["minute"] = dateTime.Minute();
-    json["RTC"]["second"] = dateTime.Second();
+    json["ESPClock"] = time(NULL);
+    json["RTC"]      = dateTime.Epoch64Time();
 
     json["MPU"]["lensAngle"]    = mpu.data.kalAngleX;
     json["MPU"]["trustedValue"] = mpu.data.isTrusted;
@@ -115,6 +101,9 @@ void broadcastLUXInfo(uint8_t interval) {
             break;
         case Mode::Cicle:
             json["mode"] = "cicle";
+            break;
+        case Mode::Halt:
+            json["mode"] = "halt";
             break;
     }
 
@@ -132,8 +121,7 @@ void broadcastLUXInfo(uint8_t interval) {
     json["PID_values"]["d"]      = pid.getInstantD();
     json["PID_values"]["output"] = pid.getOutput();
 
-    json["motor"]["pwm"]       = motor.data.pwm;
-    json["motor"]["direction"] = motor.data.direction;
+    json["motor"] = motor.data.pwm;
 
     serializeJson(json, stringBuffer);
     wss.broadcastTXT(stringBuffer);

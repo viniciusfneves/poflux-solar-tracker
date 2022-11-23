@@ -10,17 +10,13 @@
 #define ENABLE 25  // pwm enable
 
 #define MIN_OUTPUT_PWM 170
-#define MAX_OUTPUT_PWM 235
+#define MAX_OUTPUT_PWM 255
 #define pwmMap(value) map(value, 1, 255, MIN_OUTPUT_PWM, MAX_OUTPUT_PWM)
 
 struct MotorData {
     uint8_t pwm;
-    String  direction;
 
-    void setMotorState(uint8_t _pwm, String _direction) {
-        pwm       = _pwm;
-        direction = _direction;
-    }
+    void setMotorState(uint8_t _pwm) { pwm = _pwm; }
 };
 
 class Motor {
@@ -32,7 +28,7 @@ class Motor {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
-        data.setMotorState(PWM, "AH");
+        data.setMotorState(PWM);
     }
 
     void rotateCounterClockwise(int PWM) {
@@ -40,13 +36,13 @@ class Motor {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
-        data.setMotorState(PWM, "H");
+        data.setMotorState(PWM);
     }
     void stop() {
         digitalWrite(_enable, LOW);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
-        data.setMotorState(0, "P");
+        data.setMotorState(0);
     }
 
    public:
@@ -65,7 +61,7 @@ class Motor {
         digitalWrite(_enable, LOW);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
-        data.setMotorState(0, "P");
+        data.setMotorState(0);
     }
 
     // Aciona o driver de motor
