@@ -10,12 +10,12 @@ void connectToWifiNetwork(const char* dnsName = "lif") {
     WiFi.mode(WIFI_STA);
     WiFi.setAutoReconnect(true);
     WiFi.onEvent(
-        [](system_event_id_t event, system_event_info_t info) {
+        [](arduino_event_id_t event, arduino_event_info_t info) {
             Serial.println("#-------IP-------#");
             Serial.println(WiFi.localIP());
             Serial.println("#----------------#");
         },
-        system_event_id_t::SYSTEM_EVENT_STA_GOT_IP);
+        arduino_event_id_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
 
     WiFi.begin(WIFI_SSID_CREDENTIALS, WIFI_PASSWORD_CREDENTIALS);
 

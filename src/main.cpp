@@ -64,7 +64,7 @@ void adjustLens(int targetPosition  = timeInfo.sunPosition(),
         if (currentPosition <= 0) {
             output = output * MAX_DAMPING_FACTOR;
             Serial.println(
-                "DAMPING STATE: MAX - output > 0 & currentPosition <=0")
+                "DAMPING STATE: MAX - output > 0 & currentPosition <=0");
         } else if (currentPosition < DAMPING_ANGLE) {
             dampingFactor =
                 constrain(abs(currentPosition) * DUMPING_STRECH / DAMPING_ANGLE,
