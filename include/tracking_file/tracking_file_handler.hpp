@@ -42,7 +42,7 @@ int64_t lastESPtimestamp = 0;
 void runDataLogger() {
     ESPtimestamp = esp_timer_get_time() / 1000;
     if (ESPtimestamp - lastESPtimestamp >= 10000) {
-        writeDataToTrackingFile(dateTime.Epoch32Time(), timeInfo.sunPosition(),
+        writeDataToTrackingFile(dateTime.Epoch64Time(), timeInfo.sunPosition(),
                                 mpu.data.kalAngleX);
         lastESPtimestamp = ESPtimestamp;
     }

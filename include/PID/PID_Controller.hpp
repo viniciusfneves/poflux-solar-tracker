@@ -14,6 +14,7 @@ class PID_Controller {
     double  _threshold;
     double  _lastError             = 0.;
     double  _lastIntegrativeValue  = 0.;
+    double  _propMultiplier        = 0.;
     int64_t _lastRun               = 0UL;
     int64_t _lastUnstableTimestamp = 0UL;
 
@@ -22,7 +23,7 @@ class PID_Controller {
     // passado em porcentagem. Esse valor definirá qual porcentagem máxima de
     // participação no output do controlador a constrante integrativa terá
     PID_Controller(double kp, double ki, double kd, double threshold = 1.7,
-                   int integrativeLimitPercentage = 90) {
+                   int integrativeLimitPercentage = 75) {
         _integrativeLimitPercentage = integrativeLimitPercentage / 100.;
         _threshold                  = threshold;
         _kp                         = kp;
@@ -47,8 +48,7 @@ class PID_Controller {
     int    getOutput() { return (int)_output; }
 
     int calculateOutput(double actualState, double target = 0.,
-                        double  stateVariation = 0.,
-                        int64_t time           = esp_timer_get_time()) {
+                        int64_t time = esp_timer_get_time()) {
         double error = actualState - target;
         double dt    = (time - _lastRun) / 1000000.;
 
@@ -56,16 +56,16 @@ class PID_Controller {
             if (_lastUnstableTimestamp + TIME_T0_STABILIZE > time) reset();
             _p         = 0;
             _i         = 0;
-            _d         = stateVariation;
+            _d         = 0;
             _lastRun   = time;
             _lastError = 0.;
             _output    = 0;
             return 0;
         }
 
-        _p = _kp * error;
+        _p = _kp * error * abs(actualState) / _propMultiplier;
         _i = _lastIntegrativeValue + (_ki * error * dt);
-        _d = stateVariation;
+        _d = (_kd * -_lastError) / dt;
         _i = constrain(_i, -_integrativeLimit, _integrativeLimit);
         // Filtra a variacao do erro para a derivada
         // error = (KFE * error) + ((1 - KFE) * lastError);
@@ -88,4 +88,4 @@ class PID_Controller {
     }
 };
 
-PID_Controller pid(0.7, 0.3, 0.40);
+PID_Controller pid(0.6, 0.3, 0.23);

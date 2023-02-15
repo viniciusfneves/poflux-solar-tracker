@@ -16,7 +16,7 @@ wget.download(f"http://{address}/pof-lux/tracking", filepath + filename)
 
 sleep(15)
 
-x = requests.get(f"http://{address}/pof-lux/clear_tracking")
+x = requests.delete(f"http://{address}/pof-lux/clear_tracking")
 
 ftp = FTP("146.164.132.215")
 ftp.login("poflux", "hDCsGW&BNBz%K3K")

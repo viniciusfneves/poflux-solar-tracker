@@ -9,6 +9,7 @@
 #include <PID/PID_Controller.hpp>
 #include <TimeController/TimeController.hpp>
 #include <configurations/configurations.hpp>
+#include <motor/motor.hpp>
 
 WebSocketsServer wss(81);  // Configura o serviço do WebSockets para a porta 81
 
@@ -26,9 +27,6 @@ void handleWSData(String message) {
         }
         if (strcmp(jsonM["mode"], "manual") == 0) {
             configs.mode = Mode::Manual;
-        }
-        if (strcmp(jsonM["mode"], "cicle") == 0) {
-            configs.mode = Mode::Cicle;
         }
         if (strcmp(jsonM["mode"], "halt") == 0) {
             configs.mode = Mode::Halt;
@@ -63,9 +61,6 @@ void handleWSData(String message) {
             settimeofday(&_date, NULL);
         }
     }
-    if (jsonM.containsKey("cicle_time")) {
-        configs.cicleTime = constrain(jsonM["cicle_time"].as<int8_t>(), 1, 10);
-    }
 }
 
 void handleWSEvent(uint8_t client_id, WStype_t type, uint8_t *payload,
@@ -99,9 +94,6 @@ void broadcastLUXInfo(uint8_t interval) {
         case Mode::Manual:
             json["mode"] = "manual";
             break;
-        case Mode::Cicle:
-            json["mode"] = "cicle";
-            break;
         case Mode::Halt:
             json["mode"] = "halt";
             break;
@@ -109,7 +101,6 @@ void broadcastLUXInfo(uint8_t interval) {
 
     json["manualSetpoint"]       = configs.manualSetpoint;
     json["cicleSetpoint"]        = timeInfo.getCicleSetpoint();
-    json["cicleTime"]            = configs.cicleTime;
     json["sunPosition"]          = timeInfo.sunPosition();
     json["lens_error_threshold"] = pid.getThreshold();
 

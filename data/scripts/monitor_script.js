@@ -27,9 +27,11 @@ window.onload = function () {
 	document
 		.getElementById("download-tracking-file")
 		.addEventListener("click", (_) => (window.location.href = "pof-lux/tracking"));
-	document
-		.getElementById("clear-tracking-file")
-		.addEventListener("click", (_) => (window.location.href = "pof-lux/clear_tracking"));
+	document.getElementById("clear-tracking-file").addEventListener("click", (_) =>
+		fetch("/pof-lux/clear_tracking", {
+			method: "DELETE",
+		}).then((response) => console.log(response))
+	);
 	// document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
 
 	setInterval(() => {
@@ -90,8 +92,3 @@ ws.onmessage = function (response) {
 	document.getElementById("D").innerHTML = json["PID_values"]["d"].toFixed(2);
 	document.getElementById("pid_output").innerHTML = json["PID_values"]["output"];
 };
-
-function sendCustomMessage() {
-	let message = document.getElementById("debug-message-text-field").value;
-	ws.send(message);
-}

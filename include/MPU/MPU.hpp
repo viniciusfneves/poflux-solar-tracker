@@ -4,8 +4,8 @@
 #include <Wire.h>
 #include <math.h>
 
+#include <configurations/configurations.hpp>
 #include <debugLED/debugLED.hpp>
-#include <motor/motor.hpp>
 
 #define RAW_TO_G 16384.
 #define RAW_TO_RAD_PER_SECOND 131 * 0.01745
@@ -19,9 +19,9 @@ Kalman kalmanY;
 
 // Estutura para armazenar os dados do MPU
 struct MPUData {
+    bool   isTrusted = false;
     double AcX, AcY, AcZ, Tmp, GyXRate, GyYRate, GyZRate;
     double roll, pitch;
-    bool   isTrusted = false;
     double kalAngleX, kalAngleY;  // Ângulo usando filtro de Kalman
 };
 
@@ -59,7 +59,7 @@ class MPU6050_Solar {
     }
 
     void _handleErrors() {
-        motor.command(0);
+        configs.mode == Mode::Halt;
         updateLEDState(LEDState::solving_error);
         reset();
     }
@@ -103,7 +103,11 @@ class MPU6050_Solar {
         response = Wire.endTransmission();
         if (response != 0) return false;
 
-        readMPU();
+        //! READS THE MPU 50 TIMES. THIS STABILIZES THE FINAL OUTPUT VALUE
+        for (size_t i = 0; i < 50; i++) {
+            delay(10);
+            readMPU();
+        }
         _timer = micros();
         kalmanX.setAngle(data.roll);  // Set starting angle
         kalmanY.setAngle(data.pitch);
@@ -125,12 +129,9 @@ class MPU6050_Solar {
         delay(200);
         if (!_init()) {
             updateLEDState(LEDState::error);
-            for (int cont = 0; cont < SECONDS_TO_RECONNECT * 2; cont++) {
-                delay(500);
-                Serial.print(".");
-            }
-            Serial.printf("\nReconenctando ao MPU...");
-            init();
+            Serial.printf("\nErro de conexão com a IMU...");
+            delay(30000);
+            ESP.restart();
         }
     }
 
@@ -164,7 +165,7 @@ class MPU6050_Solar {
                 mpuRawData[i] = Wire.read() << 8 | Wire.read();
             }
             // Delta time
-            double dt = (double)(micros() - _timer) / 1000000;
+            double dt = (micros() - _timer) / 1000000.;
             _timer    = micros();
 
             // Converte as unidades dos dados recebidos para as correspondentes
@@ -198,6 +199,10 @@ class MPU6050_Solar {
                     -data.GyYRate;  // Invert rate, so it fits the restriced
                                     // accelerometer reading
             data.kalAngleY = kalmanY.getAngle(data.pitch, data.GyYRate, dt);
+
+            //! ROUND TO 1 DECIMAL PLACE
+            data.kalAngleX = round(data.kalAngleX * 10) / 10.;
+            data.kalAngleY = round(data.kalAngleY * 10) / 10.;
 
         } catch (const byte e) {
             _debugI2CResponse(e);

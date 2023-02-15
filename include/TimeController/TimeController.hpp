@@ -54,24 +54,6 @@ class TimeController {
         }
     }
 
-    int ciclePosition(int position) {
-        int64_t now = esp_timer_get_time();
-        if (now - _lastCicleUpdate >= 25000 * abs(configs.cicleTime)) {
-            _lastCicleUpdate = now;
-            if (position >= _cicleLimit || _cicleIncrement >= _cicleLimit)
-                _cicleIncrement = false;
-            else if (position <= -_cicleLimit ||
-                     _cicleIncrement <= -_cicleLimit)
-                _cicleIncrement = true;
-            if (_cicleIncrement) {
-                _ciclePosition++;
-            } else {
-                _ciclePosition--;
-            }
-        }
-        return _ciclePosition;
-    }
-
     int sunPosition() {
         byte today[] = {dateTime.Second(), dateTime.Minute(),
                         dateTime.Hour(),   dateTime.Day(),

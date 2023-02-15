@@ -1,12 +1,10 @@
-### Inside this folder should contain a file named "credentials.hpp" with the following structure:
+### Inside this folder should contain a file named "credentials.h" with the following structure:
 
-~~~cpp
+```cpp
 #pragma once
 
-#define WIFI_SSID_CREDENTIALS     ""
-#define WIFI_PASSWORD_CREDENTIALS ""
-
-#define FTP_SERVER_CREDENTIALS    ""
-#define FTP_USERNAME_CREDENTIALS  ""
-#define FTP_PASSWORD_CREDENTIALS  ""
-~~~
+#define WIFI_SSID     ""
+#define WIFI_PASSWORD ""
+#define AUTH_USER     ""
+#define AUTH_PASSWORD ""
+```

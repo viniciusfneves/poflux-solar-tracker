@@ -2,8 +2,7 @@
 
 #include <ESPmDNS.h>
 #include <WiFi.h>
-
-#include <credentials/credentials.hpp>
+#include <credentials/credentials.h>
 
 /** @brief Connect to Wi-Fi network*/
 void connectToWifiNetwork(const char* dnsName = "lif") {
@@ -17,7 +16,7 @@ void connectToWifiNetwork(const char* dnsName = "lif") {
         },
         arduino_event_id_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
 
-    WiFi.begin(WIFI_SSID_CREDENTIALS, WIFI_PASSWORD_CREDENTIALS);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     MDNS.begin(dnsName);
     vTaskDelay(3000);
