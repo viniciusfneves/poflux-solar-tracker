@@ -30,7 +30,13 @@ window.onload = function () {
 	document.getElementById("clear-tracking-file").addEventListener("click", (_) =>
 		fetch("/pof-lux/clear_tracking", {
 			method: "DELETE",
-		}).then((response) => console.log(response))
+		}).then((response) => {
+			if (response.status == 200) {
+				alert("Sucesso! Dados apagados");
+			} else {
+				alert("Ops! Algo deu errado");
+			}
+		})
 	);
 	// document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
 
@@ -72,17 +78,16 @@ ws.onmessage = function (response) {
 	document.getElementById("manual_position").innerHTML = json["manualSetpoint"];
 	document.getElementById("lens_angle").innerHTML = json["MPU"]["lensAngle"].toFixed(1);
 
-	document.getElementById("rtc_day").innerHTML = json["RTC"];
-	// document.getElementById("rtc_month").innerHTML = now.getUTCMonth();
+	document.getElementById("rtc_day").innerHTML = now.getDate();
+	document.getElementById("rtc_month").innerHTML = now.getMonth() + 1;
 	document.getElementById("rtc_year").innerHTML = now.getFullYear();
-	// document.getElementById("rtc_hour").innerHTML = now.getHours();
-	// document.getElementById("rtc_minute").innerHTML = now.getMinutes();
-	// document.getElementById("rtc_second").innerHTML = now.getSeconds();
+	document.getElementById("rtc_hour").innerHTML = now.getHours();
+	document.getElementById("rtc_minute").innerHTML = now.getMinutes();
+	document.getElementById("rtc_second").innerHTML = now.getSeconds();
 
 	let motor_percentage = (json["motor"] / 2.55).toFixed(1);
 	document.getElementById("motor-pwr-bar").innerHTML = motor_percentage + "%";
 	document.getElementById("motor-pwr-bar").style.width = motor_percentage + "%";
-	//document.getElementById("motor_direction").innerHTML = json["motor"]["direction"];
 
 	document.getElementById("kp").innerHTML = json["PID_values"]["kp"];
 	document.getElementById("ki").innerHTML = json["PID_values"]["ki"];
