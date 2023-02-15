@@ -100,7 +100,6 @@ void broadcastLUXInfo(uint8_t interval) {
     }
 
     json["manualSetpoint"]       = configs.manualSetpoint;
-    json["cicleSetpoint"]        = timeInfo.getCicleSetpoint();
     json["sunPosition"]          = timeInfo.sunPosition();
     json["lens_error_threshold"] = pid.getThreshold();
 

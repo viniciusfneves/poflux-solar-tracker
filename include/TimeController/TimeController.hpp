@@ -27,11 +27,6 @@ class TimeController {
     double _daySunRise;
     double _daySunSet;
 
-    int     _ciclePosition   = 0;
-    bool    _cicleIncrement  = true;
-    int64_t _lastCicleUpdate = 0;
-    uint8_t _cicleLimit      = 60;
-
    public:
     TimeController(int RTCAddress = 0x68) { _rtcAddress = RTCAddress; }
 
@@ -40,8 +35,6 @@ class TimeController {
         lord.TimeZone(_timezone * 60);  // Envio de informações para TimeLord
         lord.Position(_latitude, _longitude);
     }
-
-    int getCicleSetpoint() { return _ciclePosition; }
 
     int timezone() { return _timezone; };
 
