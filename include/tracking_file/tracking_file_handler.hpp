@@ -6,23 +6,23 @@
 
 SemaphoreHandle_t xTrackingFileSemaphore = xSemaphoreCreateMutex();
 
-void writeDataToTrackingFile(uint32_t timestamp, int sunPosition,
+void writeDataToTrackingFile(int64_t EPOCHtimestamp, int sunPosition,
                              double lensAngle) {
     xSemaphoreTake(xTrackingFileSemaphore, portMAX_DELAY);
     File trackFile = LittleFS.open("/tracking/tracking.csv", "a+");
     trackFile.print("REM1,");
-    trackFile.print(timestamp);
+    trackFile.print(EPOCHtimestamp);
     trackFile.print(",");
     trackFile.println(sunPosition);
     trackFile.print("REM2,");
-    trackFile.print(timestamp);
+    trackFile.print(EPOCHtimestamp);
     trackFile.print(",");
     trackFile.println(lensAngle);
     trackFile.print("REM3,");
-    trackFile.print(timestamp);
+    trackFile.print(EPOCHtimestamp);
     trackFile.println(",0");
     trackFile.print("REM4,");
-    trackFile.print(timestamp);
+    trackFile.print(EPOCHtimestamp);
     trackFile.println(",0");
     trackFile.close();
     xSemaphoreGive(xTrackingFileSemaphore);
@@ -42,7 +42,7 @@ int64_t lastESPtimestamp = 0;
 void runDataLogger() {
     ESPtimestamp = esp_timer_get_time() / 1000;
     if (ESPtimestamp - lastESPtimestamp >= 10000) {
-        writeDataToTrackingFile(dateTime.Epoch64Time(), timeInfo.sunPosition(),
+        writeDataToTrackingFile(timeInfo.datetime(), timeInfo.sunPosition(),
                                 mpu.data.kalAngleX);
         lastESPtimestamp = ESPtimestamp;
     }

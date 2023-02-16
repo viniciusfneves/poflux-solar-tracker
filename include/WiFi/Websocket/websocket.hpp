@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WebSocketsServer.h>
-#include <time.h>
 
 #include <MPU/MPU.hpp>
 #include <PID/PID_Controller.hpp>
@@ -50,15 +49,7 @@ void handleWSData(String message) {
         }
         if (jsonM["adjust"].containsKey("rtc")) {
             // {'adjust':{'rtc':Epoch64Time}}
-            int64_t timestamp = jsonM["adjust"]["rtc"];
-            xSemaphoreTake(RTCSemaphore, portMAX_DELAY);
-            dateTime.InitWithEpoch64Time(timestamp);
-            rtc.SetDateTime(dateTime);
-            xSemaphoreGive(RTCSemaphore);
-            timeval _date;
-            _date.tv_sec  = timestamp;
-            _date.tv_usec = 0;
-            settimeofday(&_date, NULL);
+            timeInfo.setDatetime(jsonM["adjust"]["rtc"].as<int64_t>());
         }
     }
 }
@@ -81,8 +72,8 @@ void broadcastLUXInfo(uint8_t interval) {
     StaticJsonDocument<1024> json;
     String                   stringBuffer;
 
-    json["ESPClock"] = time(NULL);
-    json["RTC"]      = dateTime.Epoch64Time();
+    json["ESPClock"] = timeInfo.datetime();
+    json["RTC"]      = timeInfo.RTCdatetime();
 
     json["MPU"]["lensAngle"]    = mpu.data.kalAngleX;
     json["MPU"]["trustedValue"] = mpu.data.isTrusted;
@@ -129,5 +120,5 @@ void handleWSServer(void *_) {
 void startWSS() {
     wss.begin();
     wss.onEvent(handleWSEvent);
-    xTaskCreate(handleWSServer, "WS_Handler", 1024 * 3, NULL, 1, NULL);
+    xTaskCreate(handleWSServer, "WS_Handler", 1024 * 4, NULL, 1, NULL);
 }
