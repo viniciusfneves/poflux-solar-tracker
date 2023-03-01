@@ -59,7 +59,7 @@ class MPU6050_Solar {
     }
 
     void _handleErrors() {
-        configs.mode == Mode::Halt;
+        configs.mode = Mode::Halt;
         updateLEDState(LEDState::solving_error);
         reset();
     }
@@ -200,9 +200,9 @@ class MPU6050_Solar {
                                     // accelerometer reading
             data.kalAngleY = kalmanY.getAngle(data.pitch, data.GyYRate, dt);
 
-            //! ROUND TO 1 DECIMAL PLACE
-            data.kalAngleX = round(data.kalAngleX * 10) / 10.;
-            data.kalAngleY = round(data.kalAngleY * 10) / 10.;
+            //! ROUND TO 2 DECIMAL PLACES
+            data.kalAngleX = round(data.kalAngleX * 100) / 100.;
+            data.kalAngleY = round(data.kalAngleY * 100) / 100.;
 
         } catch (const byte e) {
             _debugI2CResponse(e);

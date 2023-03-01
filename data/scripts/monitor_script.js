@@ -73,7 +73,7 @@ ws.onmessage = function (response) {
 	setOpMode(json["mode"]);
 	document.getElementById("sun_position").innerHTML = json["sunPosition"];
 	document.getElementById("manual_position").innerHTML = json["manualSetpoint"];
-	document.getElementById("lens_angle").innerHTML = json["MPU"]["lensAngle"].toFixed(1);
+	document.getElementById("lens_angle").innerHTML = json["MPU"]["lensAngle"];
 
 	document.getElementById("rtc_day").innerHTML = now.getUTCDate();
 	document.getElementById("rtc_month").innerHTML = now.getUTCMonth() + 1;
