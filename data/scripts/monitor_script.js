@@ -36,7 +36,10 @@ window.onload = function () {
 			}
 		})
 	);
-	// document.getElementById("debug-send-button").addEventListener("click", (_) => sendCustomMessage());
+	// document.getElementById("debug-send-button").addEventListener("click", (_) => {
+	// 	let message = document.getElementById("debug_message-text-field").value;
+	// 	ws.send(message);
+	// });
 
 	setInterval(() => {
 		if (!modified) {
