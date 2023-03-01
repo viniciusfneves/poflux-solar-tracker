@@ -69,7 +69,7 @@ void handleWSEvent(uint8_t client_id, WStype_t type, uint8_t *payload,
 void broadcastLUXInfo(uint8_t interval) {
     static uint32_t lastBroadcastTimestamp = 0;
     if (micros() - lastBroadcastTimestamp < interval * 1000) return;
-    StaticJsonDocument<1024> json;
+    StaticJsonDocument<2048> json;
     String                   stringBuffer;
 
     json["ESPClock"] = timeInfo.datetime();
@@ -97,10 +97,11 @@ void broadcastLUXInfo(uint8_t interval) {
     json["PID_values"]["kp"]     = pid.getKp();
     json["PID_values"]["ki"]     = pid.getKi();
     json["PID_values"]["kd"]     = pid.getKd();
-    json["PID_values"]["p"]      = pid.getInstantP();
-    json["PID_values"]["i"]      = pid.getInstantI();
-    json["PID_values"]["d"]      = pid.getInstantD();
-    json["PID_values"]["output"] = pid.getOutput();
+    json["PID_values"]["error"]  = pid.getErrorValue();
+    json["PID_values"]["p"]      = pid.getPValue();
+    json["PID_values"]["i"]      = pid.getIValue();
+    json["PID_values"]["d"]      = pid.getDValue();
+    json["PID_values"]["output"] = pid.getOutputValue();
 
     json["motor"] = motor.data.pwm;
 

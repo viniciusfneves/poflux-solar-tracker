@@ -38,8 +38,8 @@ void setup() {
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPCIONAL] -> ângulo atual da lente
-void adjustLens(int targetPosition  = timeInfo.sunPosition(),
-                int currentPosition = mpu.data.kalAngleX) {
+void adjustLens(double targetPosition  = timeInfo.sunPosition(),
+                double currentPosition = mpu.data.kalAngleX) {
     if (configs.mode == Mode::Halt) {
         pid.reset();
         motor.command(0);

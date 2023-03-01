@@ -7,14 +7,13 @@
 class PID_Controller {
    private:
     double  _kp, _ki, _kd;
-    double  _p, _i, _d, _output;
+    double  _p, _i, _d, _output, _error;
     int     _outputLimit = 100;
     int     _integrativeLimit;
     double  _integrativeLimitPercentage;
     double  _threshold;
     double  _lastError             = 0.;
     double  _lastIntegrativeValue  = 0.;
-    double  _propMultiplier        = 0.;
     int64_t _lastRun               = 0UL;
     int64_t _lastUnstableTimestamp = 0UL;
 
@@ -42,15 +41,21 @@ class PID_Controller {
     double getKd() { return _kd; }
     double getThreshold() { return _threshold; }
 
-    double getInstantP() { return _p; }
-    double getInstantI() { return _i; }
-    double getInstantD() { return _d; }
-    int    getOutput() { return (int)_output; }
+    double getPValue() { return _p; }
+    double getIValue() { return _i; }
+    double getDValue() { return _d; }
+    double getErrorValue() { return _error; }
+    int    getOutputValue() { return (int)_output; }
 
-    int calculateOutput(double actualState, double target = 0.,
-                        int64_t time = esp_timer_get_time()) {
+    int calculateOutput(double actualState, double target = 0.) {
+        // Get the esp time in milliseconds
+        int64_t time = esp_timer_get_time();
+        // Calculates the delta time since last PID adjust in seconds
+        double dt    = (time - _lastRun) / 1000000.;  // delta time in seconds
         double error = actualState - target;
-        double dt    = (time - _lastRun) / 1000000.;
+        //! Rounding error to 2 decimal places
+        error  = round(error * 100) / 100.;
+        _error = error;
 
         if (abs(error) < _threshold) {
             if (_lastUnstableTimestamp + TIME_T0_STABILIZE > time) reset();
@@ -63,10 +68,10 @@ class PID_Controller {
             return 0;
         }
 
-        _p = _kp * error * abs(actualState) / _propMultiplier;
+        _p = _kp * error;
         _i = _lastIntegrativeValue + (_ki * error * dt);
-        _d = (_kd * -_lastError) / dt;
         _i = constrain(_i, -_integrativeLimit, _integrativeLimit);
+        _d = _kd * (error - _lastError) / dt;
         // Filtra a variacao do erro para a derivada
         // error = (KFE * error) + ((1 - KFE) * lastError);
 
