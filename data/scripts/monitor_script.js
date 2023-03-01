@@ -20,7 +20,7 @@ window.onload = function () {
 	document.getElementById("rtc-set-btn").addEventListener("click", (_) => {
 		let value = document.getElementById("adjust_rtc").value;
 		let date = Date.parse(value + "Z");
-		ws.send(`{'adjust':{'rtc':${date/1000}}}`);
+		ws.send(`{'adjust':{'rtc':${date / 1000}}}`);
 	});
 	document
 		.getElementById("download-tracking-file")
@@ -93,4 +93,5 @@ ws.onmessage = function (response) {
 	document.getElementById("I").innerHTML = json["PID_values"]["i"].toFixed(2);
 	document.getElementById("D").innerHTML = json["PID_values"]["d"].toFixed(2);
 	document.getElementById("pid_output").innerHTML = json["PID_values"]["output"];
+	document.getElementById("error").innerHTML = json["PID_values"]["error"];
 };

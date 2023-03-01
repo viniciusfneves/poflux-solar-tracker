@@ -4,12 +4,15 @@
 
 #include <TimeController/TimeController.hpp>
 
+void clearTrackingData();
+
 SemaphoreHandle_t xTrackingFileSemaphore = xSemaphoreCreateMutex();
 
 void writeDataToTrackingFile(int64_t EPOCHtimestamp, int sunPosition,
                              double lensAngle) {
     xSemaphoreTake(xTrackingFileSemaphore, portMAX_DELAY);
-    File trackFile = LittleFS.open("/tracking/tracking.csv", "a+");
+    File trackFile = LittleFS.open("/tracking.csv", "a+");
+    if (!trackFile) clearTrackingData();
     trackFile.print("REM1,");
     trackFile.print(EPOCHtimestamp);
     trackFile.print(",");
@@ -30,7 +33,7 @@ void writeDataToTrackingFile(int64_t EPOCHtimestamp, int sunPosition,
 
 void clearTrackingData() {
     xSemaphoreTake(xTrackingFileSemaphore, portMAX_DELAY);
-    File trackFile = LittleFS.open("/tracking/tracking.csv", "w");
+    File trackFile = LittleFS.open("/tracking.csv", "w", true);
     trackFile.println("Channel name,Timestamp,Value");
     trackFile.close();
     xSemaphoreGive(xTrackingFileSemaphore);
