@@ -1,10 +1,12 @@
 import { ws } from "./websocket.js";
 import "https://cdn.plot.ly/plotly-2.20.0.min.js";
 
+const lens_info_graph = document.getElementById("lens_info");
+
+const fig_aperture = 5;
+
 var modified = false;
 var ticks = 0;
-
-const lens_info_graph = document.getElementById("lens_info");
 
 window.onload = function () {
 	document.getElementById("auto-btn").addEventListener("click", (_) => ws.send("{'mode':'auto'}"));
@@ -92,11 +94,9 @@ ws.onmessage = function (response) {
 	document.getElementById("pid_output").innerHTML = json["PID_values"]["output"];
 	document.getElementById("error").innerHTML = json["PID_values"]["error"];
 
-	const fig_aperture = 5;
-
-	let sun_position = json["sunPosition"];
 	let manual_setpoint = json["manualSetpoint"];
 	let lens_angle = json["MPU"]["lensAngle"];
+	let sun_position = json["sunPosition"];
 	Plotly.newPlot(
 		lens_info_graph,
 		[
@@ -140,9 +140,9 @@ ws.onmessage = function (response) {
 					sun_position + fig_aperture,
 				],
 				fill: "toself",
-				fillcolor: "orange",
+				fillcolor: "#ffc107",
 				line: {
-					color: "orange",
+					color: "#ffc107",
 				},
 			},
 		],
@@ -159,6 +159,7 @@ ws.onmessage = function (response) {
 				// },
 			},
 			showlegend: true,
+			legend: { orientation: "h", x: 0.5, xanchor: "center" },
 		},
 		{
 			responsive: true,

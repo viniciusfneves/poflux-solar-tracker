@@ -1,16 +1,28 @@
-* {
-	margin: 0;
-	padding: 0;
-}
-
 html {
 	font-family: Helvetica;
 	text-align: center;
 	color: black;
+	min-height: 100%;
 }
 
 body {
-	background-color: whitesmoke;
+	background: linear-gradient(145deg, rgba(40, 86, 145, 0.322), 12%, rgb(233, 233, 233));
+}
+
+#logo_lif {
+	/* position: absolute; */
+	margin: 1rem auto 0 auto;
+	height: 90px;
+}
+
+.data-container {
+	padding: 1rem;
+	width: 70%;
+	max-width: 1000px;
+	margin: 12px auto;
+	border-radius: 12px;
+	box-shadow: 1.5px 1.5px 2px 0px rgba(0, 0, 0, 0.15);
+	background-color: white;
 }
 
 #motor-pwr-progress {
@@ -60,4 +72,11 @@ body {
 	width: 65%;
 	max-height: 400px;
 	max-width: 1000px;
+}
+
+.footer {
+	width: 70%;
+	max-width: 1000px;
+	margin: 12px auto;
+	text-align: end;
 }
