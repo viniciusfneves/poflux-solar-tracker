@@ -10,7 +10,7 @@ html {
 }
 
 body {
-	background-color: rgb(240, 240, 240);
+	background-color: whitesmoke;
 }
 
 #motor-pwr-progress {
@@ -53,4 +53,11 @@ body {
 #debug-send-button {
 	color: white;
 	background-color: lightseagreen;
+}
+
+#lens_info {
+	margin: 0 auto;
+	width: 65%;
+	max-height: 400px;
+	max-width: 1000px;
 }

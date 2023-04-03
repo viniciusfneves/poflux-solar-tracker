@@ -20,39 +20,18 @@
 		<script type="module" src="../scripts/monitor_script.js"></script>
 		<title>Monitor POF LUX</title>
 	</head>
-	<body>
-		<h4 class="mt-4" id="connection_status">Status: Sem conexão</h4>
+	<body class="mt-4">
 		<h3 id="op-mode">Modo de Operação</h3>
 
 		<div>
-			<button
-				type="button"
-				class="btn btn-success btn-lg m-2 mode-btn border-0"
-				id="auto-btn"
-			>
-				AUTO
-			</button>
-			<button
-				type="button"
-				class="btn btn-success btn-lg m-2 mode-btn border-0"
-				id="manual-btn"
-			>
-				MANUAL
-			</button>
-			<button
-				type="button"
-				class="btn btn-danger btn-lg m-2 mode-btn border-0"
-				id="halt-btn"
-			>
-				HALT
-			</button>
+			<button type="button" class="btn btn-success btn-lg m-2 mode-btn border-0" id="auto-btn">AUTO</button>
+			<button type="button" class="btn btn-success btn-lg m-2 mode-btn border-0" id="manual-btn">MANUAL</button>
+			<button type="button" class="btn btn-danger btn-lg m-2 mode-btn border-0" id="halt-btn">HALT</button>
 		</div>
 
 		<div class="mt-3">
 			<input type="datetime-local" id="adjust_rtc" />
-			<button type="button" class="btn btn-secondary m-1 border-0" id="rtc-set-btn">
-				SET
-			</button>
+			<button type="button" class="btn btn-secondary m-1 border-0" id="rtc-set-btn">SET</button>
 		</div>
 
 		<div id="rtc_info">
@@ -82,20 +61,7 @@
 			</div>
 		</div>
 
-		<div id="lens_info">
-			<div class="d-inline-block m-3">
-				<h5>Angulo da Lente</h5>
-				<h5 id="lens_angle"></h5>
-			</div>
-			<div class="d-inline-block m-3">
-				<h5>Posição do Sol</h5>
-				<h5 id="sun_position"></h5>
-			</div>
-			<div class="d-inline-block m-3">
-				<h5>Posição Manual</h5>
-				<h5 id="manual_position"></h5>
-			</div>
-		</div>
+		<div id="lens_info"></div>
 
 		<div id="motor_info">
 			<h5>Potência do Motor</h5>
@@ -145,20 +111,10 @@
 		</div>
 		<div id="tracking-options">
 			<h3>Controle de dados - LIF Remoto</h3>
-			<button
-				type="button"
-				class="btn btn-primary btn-lg m-2 border-0"
-				id="download-tracking-file"
-			>
+			<button type="button" class="btn btn-primary btn-lg m-2 border-0" id="download-tracking-file">
 				Baixar Dados
 			</button>
-			<button
-				type="button"
-				class="btn btn-danger btn-lg m-2 border-0"
-				id="clear-tracking-file"
-			>
-				Apagar Dados
-			</button>
+			<button type="button" class="btn btn-danger btn-lg m-2 border-0" id="clear-tracking-file">Apagar Dados</button>
 		</div>
 		<!-- <div id="debug">
 			<h3>Debug</h3>
