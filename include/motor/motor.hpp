@@ -3,8 +3,6 @@
 #include <Arduino.h>
 #include <analogWrite.h>
 
-#include <configurations/configurations.hpp>
-
 #define LPWM 33    // lpwm
 #define RPWM 32    // rpwm
 #define ENABLE 25  // pwm enable
@@ -66,10 +64,6 @@ class Motor {
 
     // Aciona o driver de motor
     void command(int PWM) {
-        if (configs.mode == Mode::Halt) {
-            stop();
-            return;
-        }
         if (PWM == 0)
             stop();
         else if (PWM < 0)

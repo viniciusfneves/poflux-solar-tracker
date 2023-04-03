@@ -22,13 +22,13 @@ void handleWSData(String message) {
     }
     if (jsonM.containsKey("mode")) {
         if (strcmp(jsonM["mode"], "auto") == 0) {
-            configs.mode = Mode::Auto;
+            configs.changeMode(Mode::Auto);
         }
         if (strcmp(jsonM["mode"], "manual") == 0) {
-            configs.mode = Mode::Manual;
+            configs.changeMode(Mode::Manual);
         }
         if (strcmp(jsonM["mode"], "halt") == 0) {
-            configs.mode = Mode::Halt;
+            configs.changeMode(Mode::Halt);
         }
     }
     if (jsonM.containsKey("manual_setpoint")) {

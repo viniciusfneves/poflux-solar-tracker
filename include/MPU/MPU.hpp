@@ -59,7 +59,7 @@ class MPU6050_Solar {
     }
 
     void _handleErrors() {
-        configs.mode = Mode::Halt;
+        configs.changeMode(Mode::Halt);
         updateLEDState(LEDState::solving_error);
         reset();
     }
