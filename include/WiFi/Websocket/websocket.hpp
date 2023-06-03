@@ -12,60 +12,6 @@
 
 WebSocketsServer wss(81);  // Configura o serviço do WebSockets para a porta 81
 
-void handleWSData(String message) {
-    StaticJsonDocument<1024> jsonM;
-    deserializeJson(jsonM, message);
-    if (jsonM.containsKey("command")) {
-        if (strcmp(jsonM["command"], "reset") == 0) {
-            ESP.restart();
-        }
-    }
-    if (jsonM.containsKey("mode")) {
-        if (strcmp(jsonM["mode"], "auto") == 0) {
-            configs.changeMode(Mode::Auto);
-        }
-        if (strcmp(jsonM["mode"], "manual") == 0) {
-            configs.changeMode(Mode::Manual);
-        }
-        if (strcmp(jsonM["mode"], "halt") == 0) {
-            configs.changeMode(Mode::Halt);
-        }
-    }
-    if (jsonM.containsKey("manual_setpoint")) {
-        configs.manualSetpoint = jsonM["manual_setpoint"].as<int8_t>();
-    }
-    if (jsonM.containsKey("adjust")) {
-        if (jsonM["adjust"].containsKey("kp")) {
-            pid.setKp(jsonM["adjust"]["kp"].as<double>());
-        }
-        if (jsonM["adjust"].containsKey("ki")) {
-            pid.setKi(jsonM["adjust"]["ki"].as<double>());
-        }
-        if (jsonM["adjust"].containsKey("kd")) {
-            pid.setKd(jsonM["adjust"]["kd"].as<double>());
-        }
-        if (jsonM["adjust"].containsKey("error_threshold")) {
-            pid.setThreshold(jsonM["adjust"]["error_threshold"].as<double>());
-        }
-        if (jsonM["adjust"].containsKey("rtc")) {
-            // {'adjust':{'rtc':Epoch64Time}}
-            timeInfo.setDatetime(jsonM["adjust"]["rtc"].as<int64_t>());
-        }
-    }
-}
-
-void handleWSEvent(uint8_t client_id, WStype_t type, uint8_t *payload,
-                   size_t length) {
-    switch (type) {
-        // Caso a mensagem seja do tipo text
-        case WStype_TEXT:
-            handleWSData((String)((char *)payload));
-            break;
-        default:
-            break;
-    }
-}
-
 void broadcastLUXInfo(uint8_t interval) {
     static uint32_t lastBroadcastTimestamp = 0;
     if (micros() - lastBroadcastTimestamp < interval * 1000) return;
@@ -120,6 +66,5 @@ void handleWSServer(void *_) {
 
 void startWSS() {
     wss.begin();
-    wss.onEvent(handleWSEvent);
     xTaskCreate(handleWSServer, "WS_Handler", 1024 * 4, NULL, 1, NULL);
 }
