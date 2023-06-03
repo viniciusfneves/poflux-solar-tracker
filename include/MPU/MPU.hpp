@@ -66,7 +66,7 @@ class MPU6050_Solar {
 
     bool _init() {
         digitalWrite(MPU_PWR_CTRL_PIN, HIGH);
-        delay(200);
+        delay(100);
         byte response;
         // -- Configurações gerais -- //
         Wire.beginTransmission(_mpuAddress);
@@ -128,16 +128,15 @@ class MPU6050_Solar {
         if (!_init()) {
             debugLED.updateState(LEDState::error);
             Serial.printf("\nErro de conexão com a IMU...");
-            delay(30000);
+            delay(10000);
             ESP.restart();
         }
     }
 
-    void reset() {
-        while (!_init()) {
-            digitalWrite(MPU_PWR_CTRL_PIN, LOW);
-            delay(200);
-        }
+    bool reset() {
+        digitalWrite(MPU_PWR_CTRL_PIN, LOW);
+        delay(500);
+        return _init();
     }
 
     void readMPU() {
@@ -204,11 +203,9 @@ class MPU6050_Solar {
         } catch (const byte e) {
             _debugI2CResponse(e);
             data.isTrusted = false;
-            _handleErrors();
         } catch (const char* e) {
             Serial.println(e);
             data.isTrusted = false;
-            _handleErrors();
         }
     }
 };

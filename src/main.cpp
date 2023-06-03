@@ -8,13 +8,13 @@
 #include <WiFi/Websocket/websocket.hpp>
 #include <WiFi/wifi.hpp>
 #include <configurations/configurations.hpp>
+#include <datalogger/datalogger.hpp>
 #include <debugLED/debugLED.hpp>
 #include <motor/motor.hpp>
-#include <tracking_file/tracking_file_handler.hpp>
 
 void setup() {
     //-------- LEDS DE DEBUG --------//
-    xTaskCreate(ledTask, "LED Debug", 1024, NULL, 1, NULL);
+    xTaskCreate(ledTask, "DEBUG LEDS", 1024, NULL, 1, NULL);
     debugLED.updateState(LEDState::configuring);
 
     //-------- MEMÓRIA --------//
@@ -59,23 +59,30 @@ void loop() {
     timeInfo.callRTC();
     mpu.readMPU();
 
-    if (mpu.data.isTrusted) debugLED.updateState(LEDState::running);
-
-    //* VERIFICA O MODO DE OPERAÇÃO DO RASTREADOR
-    switch (configs.mode) {
-        case Mode::Halt:
-            pid.reset();
-            motor.command(0);
-            break;
-
-        case Mode::Auto:
-            // Seta o objetivo de ângulo da lente para a posição do sol
-            adjustLens(timeInfo.sunPosition());
-            break;
-        case Mode::Manual:
-            // Seta o objetivo de ângulo da lente para a posição comandada pelo
-            // operador manualmente
-            adjustLens(configs.manualSetpoint);
-            break;
+    if (mpu.data.isTrusted) {
+        debugLED.updateState(LEDState::running);
+        //* VERIFICA O MODO DE OPERAÇÃO DO RASTREADOR
+        switch (configs.mode) {
+            case Mode::Halt:
+                pid.reset();
+                motor.stop();
+                break;
+            case Mode::Auto:
+                // Seta o objetivo de ângulo da lente para a posição do sol
+                adjustLens(timeInfo.sunPosition());
+                break;
+            case Mode::Manual:
+                // Seta o objetivo de ângulo da lente para a posição comandada
+                // pelo operador manualmente
+                adjustLens(configs.manualSetpoint);
+                break;
+        }
+    } else {
+        debugLED.updateState(LEDState::error);
+        Mode activeMode = configs.mode;
+        configs.changeMode(Mode::Halt);
+        if (mpu.reset()) {
+            configs.changeMode(activeMode);
+        }
     }
 }
