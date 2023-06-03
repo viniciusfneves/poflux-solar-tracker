@@ -60,7 +60,7 @@ class MPU6050_Solar {
 
     void _handleErrors() {
         configs.changeMode(Mode::Halt);
-        updateLEDState(LEDState::solving_error);
+        debugLED.updateState(LEDState::error);
         reset();
     }
 
@@ -103,16 +103,14 @@ class MPU6050_Solar {
         response = Wire.endTransmission();
         if (response != 0) return false;
 
-        //! READS THE MPU 50 TIMES. THIS STABILIZES THE FINAL OUTPUT VALUE
-        for (size_t i = 0; i < 50; i++) {
-            delay(10);
+        //! READS THE MPU 25 TIMES. THIS STABILIZES THE FINAL OUTPUT VALUE
+        for (size_t i = 0; i < 25; i++) {
+            delay(25);
             readMPU();
         }
         _timer = micros();
         kalmanX.setAngle(data.roll);  // Set starting angle
         kalmanY.setAngle(data.pitch);
-
-        updateLEDState(LEDState::running);
 
         return true;
     }
@@ -128,7 +126,7 @@ class MPU6050_Solar {
         digitalWrite(MPU_PWR_CTRL_PIN, LOW);
         delay(200);
         if (!_init()) {
-            updateLEDState(LEDState::error);
+            debugLED.updateState(LEDState::error);
             Serial.printf("\nErro de conexão com a IMU...");
             delay(30000);
             ESP.restart();
@@ -152,10 +150,9 @@ class MPU6050_Solar {
 
             // Solicita os dados do sensor
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
-            if (responseLenght == 14) {
-                updateLEDState(LEDState::running);
+            if (responseLenght == 14)
                 data.isTrusted = true;
-            } else
+            else
                 throw "MPU ERROR: Falha na leitura do MPU";
 
             // Armazena o valor dos registradores em um array

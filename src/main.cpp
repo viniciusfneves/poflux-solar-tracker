@@ -13,40 +13,39 @@
 #include <tracking_file/tracking_file_handler.hpp>
 
 void setup() {
-    // LEDs de DEBUG
-    initLEDs();
-    updateLEDState(LEDState::configuring);
+    //-------- LEDS DE DEBUG --------//
+    xTaskCreate(ledTask, "LED Debug", 1024, NULL, 1, NULL);
+    debugLED.updateState(LEDState::configuring);
+
+    //-------- MEMÓRIA --------//
+    LittleFS.begin(true);
 
     //-------- I2C --------//
     Wire.begin();
 
-    //-------- Sensores --------//
+    //-------- SENSORES --------//
     timeInfo.init();
     mpu.init();
     motor.init();
 
-    //---------WIFI---------//
+    //--------- WIFI ---------//
     connectToWifiNetwork();
     startHTTPServer();
     startWSS();
 
-    // Se as configurações forem concluídas com sucesso, atualiza o estado do
-    // programa nos LEDs de DEBUG
-    updateLEDState(LEDState::running);
+    //--------- DATALOGGER ---------//
+    xTaskCreate(dataloggerTask, "DATALOGGER", 3096, NULL, 5, NULL);
+
+    // Se as configurações forem concluídas com sucesso, seta os leds para
+    // running
+    debugLED.updateState(LEDState::running);
 }
 
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPCIONAL] -> ângulo atual da lente
-void adjustLens(double targetPosition  = timeInfo.sunPosition(),
+void adjustLens(double targetPosition,
                 double currentPosition = mpu.data.kalAngleX) {
-    if (configs.mode == Mode::Halt) {
-        pid.reset();
-        motor.command(0);
-        return;
-    }
-    if (configs.mode == Mode::Manual) targetPosition = configs.manualSetpoint;
-
     currentPosition = constrain(currentPosition, -180, 180);
     targetPosition  = constrain(targetPosition, -75, 75);
 
@@ -56,9 +55,27 @@ void adjustLens(double targetPosition  = timeInfo.sunPosition(),
 }
 
 void loop() {
-    runDataLogger();
+    //* ATUALIZA A LEITURA DOS SENSORES
     timeInfo.callRTC();
     mpu.readMPU();
 
-    adjustLens();
+    if (mpu.data.isTrusted) debugLED.updateState(LEDState::running);
+
+    //* VERIFICA O MODO DE OPERAÇÃO DO RASTREADOR
+    switch (configs.mode) {
+        case Mode::Halt:
+            pid.reset();
+            motor.command(0);
+            break;
+
+        case Mode::Auto:
+            // Seta o objetivo de ângulo da lente para a posição do sol
+            adjustLens(timeInfo.sunPosition());
+            break;
+        case Mode::Manual:
+            // Seta o objetivo de ângulo da lente para a posição comandada pelo
+            // operador manualmente
+            adjustLens(configs.manualSetpoint);
+            break;
+    }
 }

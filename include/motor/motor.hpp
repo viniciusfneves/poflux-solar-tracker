@@ -3,30 +3,26 @@
 #include <Arduino.h>
 #include <analogWrite.h>
 
-#define LPWM 33    // lpwm
-#define RPWM 32    // rpwm
-#define ENABLE 25  // pwm enable
+#define LPWM_PIN 33    // lpwm
+#define RPWM_PIN 32    // rpwm
+#define ENABLE_PIN 25  // pwm enable
 
-#define MIN_OUTPUT_PWM 170
-#define MAX_OUTPUT_PWM 235
-#define pwmMap(value) map(value, 1, 255, MIN_OUTPUT_PWM, MAX_OUTPUT_PWM)
-
-struct MotorData {
-    uint8_t pwm;
-
-    void setMotorState(uint8_t _pwm) { pwm = _pwm; }
-};
+#define MIN_OUTPUT_PWM_VALUE 170
+#define MAX_OUTPUT_PWM_VALUE 235
+#define pwmMap(value) \
+    map(value, 0, 255, MIN_OUTPUT_PWM_VALUE, MAX_OUTPUT_PWM_VALUE)
 
 class Motor {
    private:
-    int _enable, _lpwm, _rpwm;
+    int     _enable, _lpwm, _rpwm;
+    uint8_t _pwm;
 
     void rotateClockwise(int PWM) {
         PWM = pwmMap(PWM);
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, HIGH);
         digitalWrite(_rpwm, LOW);
-        data.setMotorState(PWM);
+        _pwm = PWM;
     }
 
     void rotateCounterClockwise(int PWM) {
@@ -34,18 +30,10 @@ class Motor {
         analogWrite(_enable, PWM);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, HIGH);
-        data.setMotorState(PWM);
-    }
-    void stop() {
-        digitalWrite(_enable, LOW);
-        digitalWrite(_lpwm, LOW);
-        digitalWrite(_rpwm, LOW);
-        data.setMotorState(0);
+        _pwm = PWM;
     }
 
    public:
-    MotorData data;
-
     Motor(int enable_pin, int lpwm_pin, int rpwm_pin) {
         _enable = enable_pin;
         _lpwm   = lpwm_pin;
@@ -59,7 +47,15 @@ class Motor {
         digitalWrite(_enable, LOW);
         digitalWrite(_lpwm, LOW);
         digitalWrite(_rpwm, LOW);
-        data.setMotorState(0);
+        _pwm = 0;
+    }
+
+    // Para o motor
+    void stop() {
+        digitalWrite(_enable, LOW);
+        digitalWrite(_lpwm, LOW);
+        digitalWrite(_rpwm, LOW);
+        _pwm = 0;
     }
 
     // Aciona o driver de motor
@@ -71,6 +67,9 @@ class Motor {
         else
             rotateCounterClockwise(abs(PWM));
     }
+
+    // Retorna o atual PWM aplicado no motor
+    uint8_t power() { return _pwm; }
 };
 
-Motor motor(ENABLE, LPWM, RPWM);
+Motor motor(ENABLE_PIN, LPWM_PIN, RPWM_PIN);

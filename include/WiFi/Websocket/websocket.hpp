@@ -103,7 +103,7 @@ void broadcastLUXInfo(uint8_t interval) {
     json["PID_values"]["d"]      = pid.getDValue();
     json["PID_values"]["output"] = pid.getOutputValue();
 
-    json["motor"] = motor.data.pwm;
+    json["motor"] = motor.power();
 
     serializeJson(json, stringBuffer);
     wss.broadcastTXT(stringBuffer);

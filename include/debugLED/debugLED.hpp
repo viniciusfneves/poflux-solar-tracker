@@ -2,68 +2,66 @@
 
 #include <Arduino.h>
 
-#define RUN_LED 18
-#define ERRO_LED 19
+#define RUN_LED_PIN 18
+#define ERROR_LED_PIN 19
 
-enum class LEDState { configuring, running, solving_error, error };
+enum class LEDState { off, configuring, running, error };
 
-LEDState debuggingLED;
+class LEDController {
+   private:
+    LEDState _state;
+    uint8_t  _runLEDPin;
+    uint8_t  _errorLEDPin;
 
-SemaphoreHandle_t LEDSemaphore = xSemaphoreCreateMutex();
-
-void updateLEDState(LEDState state) {
-    xSemaphoreTake(LEDSemaphore, portMAX_DELAY);
-    debuggingLED = state;
-    xSemaphoreGive(LEDSemaphore);
-}
-
-void setLED(LEDState state) {
-    switch (state) {
-        case LEDState::configuring:
-            digitalWrite(RUN_LED, HIGH);
-            digitalWrite(ERRO_LED, HIGH);
-            break;
-        case LEDState::running:
-            digitalWrite(RUN_LED, !digitalRead(RUN_LED));
-            digitalWrite(ERRO_LED, LOW);
-            break;
-        case LEDState::solving_error:
-            digitalWrite(RUN_LED, LOW);
-            digitalWrite(ERRO_LED, !digitalRead(ERRO_LED));
-            break;
-        case LEDState::error:
-            digitalWrite(RUN_LED, LOW);
-            digitalWrite(ERRO_LED, HIGH);
-            break;
-
-        default:
-            digitalWrite(RUN_LED, LOW);
-            digitalWrite(ERRO_LED, HIGH);
-            updateLEDState(LEDState::error);
-            break;
+   public:
+    LEDController(uint8_t runLEDPin, uint8_t errorLEDPin,
+                  LEDState initialState = LEDState::off) {
+        _runLEDPin   = runLEDPin;
+        _errorLEDPin = errorLEDPin;
+        _state       = initialState;
     }
-}
 
-void ledHandler(void* _) {
+    LEDState ledState() { return _state; }
+
+    void updateState(LEDState state) {
+        _state = state;
+        switch (state) {
+            case LEDState::off:
+                digitalWrite(_runLEDPin, LOW);
+                digitalWrite(_errorLEDPin, LOW);
+                break;
+            case LEDState::configuring:
+                digitalWrite(_runLEDPin, HIGH);
+                digitalWrite(_errorLEDPin, HIGH);
+                break;
+            case LEDState::running:
+                digitalWrite(_runLEDPin, !digitalRead(_runLEDPin));
+                digitalWrite(_errorLEDPin, LOW);
+                break;
+            case LEDState::error:
+                digitalWrite(_runLEDPin, LOW);
+                digitalWrite(_errorLEDPin, HIGH);
+                break;
+        }
+    }
+};
+
+LEDController debugLED(RUN_LED_PIN, ERROR_LED_PIN);
+
+void ledTask(void* _) {
     for (;;) {
-        static LEDState state;
-        static int      controller = 0;
+        static uint8_t controller = 0;
 
-        if (state == debuggingLED) {
+        //* This is what makes the running LED blink
+        if (debugLED.ledState() == LEDState::running) {
             controller++;
+            if (controller > 5) {
+                debugLED.updateState(LEDState::running);
+                controller = 0;
+            }
         } else {
-            state      = debuggingLED;
             controller = 0;
         }
-        if (controller == 6) controller = 0;
-        if (controller == 0) setLED(state);
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
-}
-
-void initLEDs() {
-    pinMode(RUN_LED, OUTPUT);
-    pinMode(ERRO_LED, OUTPUT);
-    setLED(LEDState::configuring);
-    xTaskCreate(ledHandler, "LED Debug", 1024, NULL, 1, NULL);
 }
