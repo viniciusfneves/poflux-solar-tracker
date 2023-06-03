@@ -4,8 +4,10 @@
 
 #include <TimeController/TimeController.hpp>
 
+#define DATALOGGER_FILE_PATH "/tracking.csv"
+
 void clearTrackingData() {
-    File trackFile = LittleFS.open("/tracking.csv", "w", true);
+    File trackFile = LittleFS.open(DATALOGGER_FILE_PATH, "w", true);
     if (!trackFile) return;
     trackFile.println("Channel name,Timestamp,Value");
     trackFile.close();
@@ -13,7 +15,7 @@ void clearTrackingData() {
 
 void writeDataToTrackingFile(int64_t EPOCHtimestamp, int sunPosition,
                              double lensAngle) {
-    File trackFile = LittleFS.open("/tracking.csv", "a+", false);
+    File trackFile = LittleFS.open(DATALOGGER_FILE_PATH, "a+", false);
     if (!trackFile) return;
     trackFile.print("REM1,");
     trackFile.print(EPOCHtimestamp);
