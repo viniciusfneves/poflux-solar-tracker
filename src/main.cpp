@@ -13,8 +13,9 @@
 #include <motor/motor.hpp>
 
 void setup() {
+    Serial.begin(115200);
+    Serial.println("Inicializando...");
     //-------- LEDS DE DEBUG --------//
-    xTaskCreate(ledTask, "DEBUG LEDS", 1024, NULL, 1, NULL);
     debugLED.updateState(LEDState::configuring);
 
     //-------- MEMÓRIA --------//
@@ -23,6 +24,7 @@ void setup() {
     //-------- I2C --------//
     Wire.begin();
 
+    Serial.println("Configurando sensores...");
     //-------- SENSORES --------//
     timeInfo.init();
     mpu.init();
@@ -33,12 +35,15 @@ void setup() {
     startHTTPServer();
     startWSS();
 
+    Serial.println("Iniciando datalogger...");
     //--------- DATALOGGER ---------//
     xTaskCreate(dataloggerTask, "DATALOGGER", 3096, NULL, 5, NULL);
 
     // Se as configurações forem concluídas com sucesso, seta os leds para
     // running
+    Serial.println("Finalizando configurações...");
     debugLED.updateState(LEDState::running);
+    Serial.println("Rodando...");
 }
 
 // Comanda o ajuste do ângulo da lente
@@ -57,10 +62,9 @@ void adjustLens(double targetPosition,
 void loop() {
     //* ATUALIZA A LEITURA DOS SENSORES
     timeInfo.callRTC();
-    mpu.readMPU();
-
+    // mpu.readMPU();
+    mpu.data.isTrusted = true;
     if (mpu.data.isTrusted) {
-        debugLED.updateState(LEDState::running);
         //* VERIFICA O MODO DE OPERAÇÃO DO RASTREADOR
         switch (configs.mode) {
             case Mode::Halt:
@@ -77,6 +81,9 @@ void loop() {
                 adjustLens(configs.manualSetpoint);
                 break;
         }
+
+        debugLED.updateState(LEDState::running);
+
     } else {
         debugLED.updateState(LEDState::error);
         Mode activeMode = configs.mode;

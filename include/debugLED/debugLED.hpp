@@ -19,6 +19,9 @@ class LEDController {
         _runLEDPin   = runLEDPin;
         _errorLEDPin = errorLEDPin;
         _state       = initialState;
+
+        pinMode(_runLEDPin, OUTPUT);
+        pinMode(_errorLEDPin, OUTPUT);
     }
 
     LEDState ledState() { return _state; }
@@ -47,21 +50,3 @@ class LEDController {
 };
 
 LEDController debugLED(RUN_LED_PIN, ERROR_LED_PIN);
-
-void ledTask(void* _) {
-    for (;;) {
-        static uint8_t controller = 0;
-
-        //* This is what makes the running LED blink
-        if (debugLED.ledState() == LEDState::running) {
-            controller++;
-            if (controller > 5) {
-                debugLED.updateState(LEDState::running);
-                controller = 0;
-            }
-        } else {
-            controller = 0;
-        }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
-}

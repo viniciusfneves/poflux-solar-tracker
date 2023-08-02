@@ -66,8 +66,13 @@ class MPU6050_Solar {
 
     bool _init() {
         digitalWrite(MPU_PWR_CTRL_PIN, HIGH);
-        delay(100);
+        delay(200);
         byte response;
+
+        // -- Configurações da Wire I2C -- //
+        Wire.setClock(100000);  // 100KHz
+        Wire.begin();
+
         // -- Configurações gerais -- //
         Wire.beginTransmission(_mpuAddress);
         Wire.write(0x19);  // Registro SMPLRT_DIV
