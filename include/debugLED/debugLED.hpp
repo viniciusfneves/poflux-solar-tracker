@@ -26,9 +26,10 @@ class LEDController {
 
     LEDState ledState() { return _state; }
 
-    void updateState(LEDState state) {
-        _state = state;
-        switch (state) {
+    void changeState(LEDState state) { _state = state; }
+
+    void updateState() {
+        switch (_state) {
             case LEDState::off:
                 digitalWrite(_runLEDPin, LOW);
                 digitalWrite(_errorLEDPin, LOW);

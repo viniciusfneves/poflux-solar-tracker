@@ -12,11 +12,13 @@
 #include <debugLED/debugLED.hpp>
 #include <motor/motor.hpp>
 
+#define MAX_LENS_ANGLE 45
 void setup() {
     Serial.begin(115200);
     Serial.println("Inicializando...");
     //-------- LEDS DE DEBUG --------//
-    debugLED.updateState(LEDState::configuring);
+    debugLED.changeState(LEDState::configuring);
+    debugLED.updateState();
 
     //-------- MEMÓRIA --------//
     LittleFS.begin(true);
@@ -42,17 +44,33 @@ void setup() {
     // Se as configurações forem concluídas com sucesso, seta os leds para
     // running
     Serial.println("Finalizando configurações...");
-    debugLED.updateState(LEDState::running);
+
+    debugLED.changeState(LEDState::running);
+    debugLED.updateState();
+
     Serial.println("Rodando...");
+}
+
+double presentationAngleGenerator() {
+    static double  _angle       = 0;
+    static int16_t _rot         = 0;
+    static int64_t _last_change = 0;
+
+    if (_rot >= 360) _rot = 0;
+    _rot++;
+
+    // Stretching sine wave along the horizontal axis and changing the amplitude of the
+    // wave for the desired angle amplitude
+    _angle = MAX_LENS_ANGLE * sin(_rot * PI / 180);
+    return _angle;
 }
 
 // Comanda o ajuste do ângulo da lente
 // int targetPosition -> ângulo desejado da lente
 // int currentePosition [OPCIONAL] -> ângulo atual da lente
-void adjustLens(double targetPosition,
-                double currentPosition = mpu.data.kalAngleX) {
+void adjustLens(double targetPosition, double currentPosition = mpu.data.kalAngleX) {
     currentPosition = constrain(currentPosition, -180, 180);
-    targetPosition  = constrain(targetPosition, -75, 75);
+    targetPosition  = constrain(targetPosition, -MAX_LENS_ANGLE, MAX_LENS_ANGLE);
 
     int output = pid.calculateOutput(currentPosition, targetPosition);
 
@@ -60,10 +78,12 @@ void adjustLens(double targetPosition,
 }
 
 void loop() {
+    static int64_t timeController = 0;
+
     //* ATUALIZA A LEITURA DOS SENSORES
     timeInfo.callRTC();
-    // mpu.readMPU();
-    mpu.data.isTrusted = true;
+    mpu.readMPU();
+
     if (mpu.data.isTrusted) {
         //* VERIFICA O MODO DE OPERAÇÃO DO RASTREADOR
         switch (configs.mode) {
@@ -80,16 +100,30 @@ void loop() {
                 // pelo operador manualmente
                 adjustLens(configs.manualSetpoint);
                 break;
+            case Mode::Presentation:
+                // Seta o objetivo de ângulo da lente para a posição gerada pela
+                // função de apresentação
+                double presentation_angle = presentationAngleGenerator();
+                adjustLens(presentation_angle);
+                break;
         }
 
-        debugLED.updateState(LEDState::running);
+        debugLED.changeState(LEDState::running);
 
     } else {
-        debugLED.updateState(LEDState::error);
+        debugLED.changeState(LEDState::error);
+        debugLED.updateState();
         Mode activeMode = configs.mode;
         configs.changeMode(Mode::Halt);
         if (mpu.reset()) {
             configs.changeMode(activeMode);
         }
     }
+
+    if (millis() - timeController > 500) {
+        debugLED.updateState();
+        timeController = millis();
+    }
+
+    delay(10);
 }
