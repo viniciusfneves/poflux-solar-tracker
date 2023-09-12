@@ -93,4 +93,4 @@ class PID_Controller {
     }
 };
 
-PID_Controller pid(0.6, 0.3, 0.23);
+PID_Controller pid(0.375, 0.035, 0.07);

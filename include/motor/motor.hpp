@@ -7,10 +7,9 @@
 #define RPWM_PIN 32    // rpwm
 #define ENABLE_PIN 25  // pwm enable
 
-#define MIN_OUTPUT_PWM_VALUE 170
-#define MAX_OUTPUT_PWM_VALUE 235
-#define pwmMap(value) \
-    map(value, 0, 255, MIN_OUTPUT_PWM_VALUE, MAX_OUTPUT_PWM_VALUE)
+#define MIN_OUTPUT_PWM_VALUE 165
+#define MAX_OUTPUT_PWM_VALUE 255
+#define pwmMap(value) map(value, 0, 255, MIN_OUTPUT_PWM_VALUE, MAX_OUTPUT_PWM_VALUE)
 
 class Motor {
    private:
