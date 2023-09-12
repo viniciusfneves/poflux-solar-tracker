@@ -36,31 +36,28 @@ class MPU6050_Solar {
                 Serial.printf("MPU: Sucesso!");
                 break;
             case 1:
-                Serial.printf(
-                    "MPU ERROR: Mensagem grande demais para o buffer");
+                Serial.printf("MPU ERROR: Mensagem grande demais para o buffer");
                 break;
             case 2:
-                Serial.printf(
-                    "MPU ERROR: NACK recebido no endereço de transmissão");
+                Serial.printf("MPU ERROR: NACK recebido no endereço de transmissão");
                 break;
             case 3:
-                Serial.printf(
-                    "MPU ERROR: NACK recebido ao transmitir a mensagem");
+                Serial.printf("MPU ERROR: NACK recebido ao transmitir a mensagem");
                 break;
             case 4:
                 Serial.printf("MPU ERROR: Erro genérico...");
                 break;
 
             default:
-                Serial.printf("MPU ERROR: %02d - Código de erro desconhecido",
-                              errorCode);
+                Serial.printf("MPU ERROR: %02d - Código de erro desconhecido", errorCode);
                 break;
         }
     }
 
     void _handleErrors() {
         configs.changeMode(Mode::Halt);
-        debugLED.updateState(LEDState::error);
+        debugLED.changeState(LEDState::error);
+        debugLED.updateState();
         reset();
     }
 
@@ -68,10 +65,6 @@ class MPU6050_Solar {
         digitalWrite(MPU_PWR_CTRL_PIN, HIGH);
         delay(200);
         byte response;
-
-        // -- Configurações da Wire I2C -- //
-        Wire.setClock(100000);  // 100KHz
-        Wire.begin();
 
         // -- Configurações gerais -- //
         Wire.beginTransmission(_mpuAddress);
@@ -108,9 +101,9 @@ class MPU6050_Solar {
         response = Wire.endTransmission();
         if (response != 0) return false;
 
-        //! READS THE MPU 25 TIMES. THIS STABILIZES THE FINAL OUTPUT VALUE
-        for (size_t i = 0; i < 25; i++) {
-            delay(25);
+        //! READS THE MPU 10 TIMES. THIS STABILIZES THE FINAL OUTPUT VALUE
+        for (size_t i = 0; i < 10; i++) {
+            delay(50);
             readMPU();
         }
         _timer = micros();
@@ -131,16 +124,19 @@ class MPU6050_Solar {
         digitalWrite(MPU_PWR_CTRL_PIN, LOW);
         delay(200);
         if (!_init()) {
-            debugLED.updateState(LEDState::error);
+            debugLED.changeState(LEDState::error);
+            debugLED.updateState();
             Serial.printf("\nErro de conexão com a IMU...");
             delay(10000);
             ESP.restart();
         }
+        digitalWrite(MPU_PWR_CTRL_PIN, HIGH);
     }
 
     bool reset() {
         digitalWrite(MPU_PWR_CTRL_PIN, LOW);
-        delay(500);
+        delay(200);
+        digitalWrite(MPU_PWR_CTRL_PIN, HIGH);
         return _init();
     }
 
@@ -154,10 +150,7 @@ class MPU6050_Solar {
 
             // Solicita os dados do sensor
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
-            if (responseLenght == 14)
-                data.isTrusted = true;
-            else
-                throw "MPU ERROR: Falha na leitura do MPU";
+            if (responseLenght != 14) throw "MPU ERROR: Falha na leitura do MPU";
 
             // Armazena o valor dos registradores em um array
             int16_t mpuRawData[7];
@@ -165,6 +158,7 @@ class MPU6050_Solar {
             for (int i = 0; i < 7; i++) {
                 mpuRawData[i] = Wire.read() << 8 | Wire.read();
             }
+
             // Delta time
             double dt = (micros() - _timer) / 1000000.;
             _timer    = micros();
@@ -181,10 +175,15 @@ class MPU6050_Solar {
             data.GyYRate = (double)mpuRawData[5] / RAW_TO_DEGREES_PER_SECOND;
             data.GyZRate = (double)mpuRawData[6] / RAW_TO_DEGREES_PER_SECOND;
 
-            data.roll  = atan2(data.AcY, data.AcZ) * RAD_TO_DEG;
-            data.pitch = atan(-data.AcX /
-                              sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) *
-                         RAD_TO_DEG;
+            data.roll = atan2(data.AcY, data.AcZ) * RAD_TO_DEG;
+            data.pitch =
+                atan(-data.AcX / sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) *
+                RAD_TO_DEG;
+
+            if (data.roll != 0)
+                data.isTrusted = true;
+            else
+                throw "MPU ERROR: Falha na leitura do MPU";
 
             // This fixes the transition problem when the accelerometer angle
             // jumps between -180 and 180 degrees
@@ -196,9 +195,8 @@ class MPU6050_Solar {
                 data.kalAngleX = kalmanX.getAngle(data.roll, data.GyXRate, dt);
 
             if (abs(data.kalAngleX) > 90)
-                data.GyYRate =
-                    -data.GyYRate;  // Invert rate, so it fits the restriced
-                                    // accelerometer reading
+                data.GyYRate = -data.GyYRate;  // Invert rate, so it fits the restriced
+                                               // accelerometer reading
             data.kalAngleY = kalmanY.getAngle(data.pitch, data.GyYRate, dt);
 
             //! ROUND TO 2 DECIMAL PLACES
@@ -215,4 +213,5 @@ class MPU6050_Solar {
     }
 };
 
-MPU6050_Solar mpu(0x69);
+MPU6050_Solar mpu(0x69);  // With 0x69 value, AD0 pin on MPU6050 must be pulled
+                          // HIGH with 3.3V. With 0x68, leave it disconnected
