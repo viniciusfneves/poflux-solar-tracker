@@ -7,12 +7,12 @@
 #include <TimeController/TimeController.hpp>
 #include <motor/motor.hpp>
 
-enum class Mode { Auto, Manual, Halt };
+enum class Mode { Auto, Manual, Presentation, Halt };
 
 struct Configs {
     Mode     mode              = Mode::Halt;
     double   manualSetpoint    = 0;    // graus
-    uint16_t broadcastInterval = 100;  // ms
+    uint16_t broadcastInterval = 250;  // ms
 
     void changeMode(Mode _mode) {
         mode = _mode;
@@ -24,12 +24,7 @@ struct Configs {
         if (_mode == Mode::Halt) motor.command(0);
     }
 
-    void configWithJSON(String message) {
-        StaticJsonDocument<1024> jsonM;
-
-        DeserializationError err = deserializeJson(jsonM, message);
-        if (err) return;
-
+    void configWithJSON(DynamicJsonDocument jsonM) {
         if (jsonM.containsKey("command")) {
             if (strcmp(jsonM["command"], "reset") == 0) {
                 ESP.restart();
@@ -45,6 +40,9 @@ struct Configs {
             }
             if (strcmp(jsonM["mode"], "halt") == 0) {
                 changeMode(Mode::Halt);
+            }
+            if (strcmp(jsonM["mode"], "presentation") == 0) {
+                changeMode(Mode::Presentation);
             }
         }
 
@@ -63,8 +61,7 @@ struct Configs {
                 pid.setKd(jsonM["adjust"]["kd"].as<double>());
             }
             if (jsonM["adjust"].containsKey("error_threshold")) {
-                pid.setThreshold(
-                    jsonM["adjust"]["error_threshold"].as<double>());
+                pid.setThreshold(jsonM["adjust"]["error_threshold"].as<double>());
             }
             if (jsonM["adjust"].containsKey("rtc")) {
                 // {'adjust':{'rtc':Epoch64Time}}

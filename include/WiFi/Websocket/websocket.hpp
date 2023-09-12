@@ -18,11 +18,11 @@ void broadcastLUXInfo(uint8_t interval) {
     StaticJsonDocument<2048> json;
     String                   stringBuffer;
 
-    json["ESPClock"] = timeInfo.datetime();
-    json["RTC"]      = timeInfo.RTCdatetime();
+    json["esp_clock"] = timeInfo.datetime();
+    json["rtc"]       = timeInfo.RTCdatetime();
 
-    json["MPU"]["lensAngle"]    = mpu.data.kalAngleX;
-    json["MPU"]["trustedValue"] = mpu.data.isTrusted;
+    json["mpu"]["lensAngle"]    = mpu.data.kalAngleX;
+    json["mpu"]["trustedValue"] = mpu.data.isTrusted;
 
     switch (configs.mode) {
         case Mode::Auto:
@@ -34,20 +34,23 @@ void broadcastLUXInfo(uint8_t interval) {
         case Mode::Halt:
             json["mode"] = "halt";
             break;
+        case Mode::Presentation:
+            json["mode"] = "presentation";
+            break;
     }
 
-    json["manualSetpoint"]       = configs.manualSetpoint;
-    json["sunPosition"]          = timeInfo.sunPosition();
+    json["manual_setpoint"]      = configs.manualSetpoint;
+    json["sun_position"]         = timeInfo.sunPosition();
     json["lens_error_threshold"] = pid.getThreshold();
 
-    json["PID_values"]["kp"]     = pid.getKp();
-    json["PID_values"]["ki"]     = pid.getKi();
-    json["PID_values"]["kd"]     = pid.getKd();
-    json["PID_values"]["error"]  = pid.getErrorValue();
-    json["PID_values"]["p"]      = pid.getPValue();
-    json["PID_values"]["i"]      = pid.getIValue();
-    json["PID_values"]["d"]      = pid.getDValue();
-    json["PID_values"]["output"] = pid.getOutputValue();
+    json["pid_values"]["kp"]     = pid.getKp();
+    json["pid_values"]["ki"]     = pid.getKi();
+    json["pid_values"]["kd"]     = pid.getKd();
+    json["pid_values"]["error"]  = pid.getErrorValue();
+    json["pid_values"]["p"]      = pid.getPValue();
+    json["pid_values"]["i"]      = pid.getIValue();
+    json["pid_values"]["d"]      = pid.getDValue();
+    json["pid_values"]["output"] = pid.getOutputValue();
 
     json["motor"] = motor.power();
 
