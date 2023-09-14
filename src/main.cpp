@@ -12,7 +12,8 @@
 #include <debugLED/debugLED.hpp>
 #include <motor/motor.hpp>
 
-#define MAX_LENS_ANGLE 45
+#define MAX_LENS_ANGLE 40
+
 void setup() {
     Serial.begin(115200);
     Serial.println("Inicializando...");
