@@ -6,6 +6,7 @@
 
 #include <configurations/configurations.hpp>
 #include <debugLED/debugLED.hpp>
+#include <TimeController/TimeController.hpp>
 
 #define RAW_TO_G 16384.
 #define RAW_TO_RAD_PER_SECOND 131 * 0.01745
@@ -180,7 +181,7 @@ class MPU6050_Solar {
                 atan(-data.AcX / sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) *
                 RAD_TO_DEG;
 
-            if (data.roll != 0)
+            if (data.roll != 0 || configs.manualSetpoint == 0 || timeInfo.sunPosition == 0 )
                 data.isTrusted = true;
             else
                 throw "MPU ERROR: Falha na leitura do MPU";
