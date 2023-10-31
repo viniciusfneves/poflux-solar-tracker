@@ -181,7 +181,7 @@ class MPU6050_Solar {
                 atan(-data.AcX / sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) *
                 RAD_TO_DEG;
 
-            if (data.roll != 0 || configs.manualSetpoint == 0 || timeInfo.sunPosition() == 0 )
+            if (data.roll != 0 || (configs.mode == Mode:: Manual && configs.manualSetpoint == 0) ||(configs.mode == Mode::Auto  && timeInfo.sunPosition() == 0 ))
                 data.isTrusted = true;
             else
                 throw "MPU ERROR: Falha na leitura do MPU";
