@@ -24,6 +24,7 @@ struct MPUData {
     double AcX, AcY, AcZ, Tmp, GyXRate, GyYRate, GyZRate;
     double roll, pitch;
     double kalAngleX, kalAngleY;  // Ângulo usando filtro de Kalman
+    int contadorDeZeros;
 };
 
 class MPU6050_Solar {
@@ -181,9 +182,16 @@ class MPU6050_Solar {
                 atan(-data.AcX / sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) *
                 RAD_TO_DEG;
 
-            if (data.roll != 0 || (configs.mode == Mode:: Manual && configs.manualSetpoint == 0) ||(configs.mode == Mode::Auto  && timeInfo.sunPosition() == 0 ))
+            if (data.roll != 0 ) {
                 data.isTrusted = true;
-            else
+                data.contadorDeZeros = 0;
+               }
+            else if (data.contadorDeZeros <= 5) {
+                data.contadorDeZeros++;
+                data.isTrusted = true;
+                }
+            else 
+                data.isTrusted = false;
                 throw "MPU ERROR: Falha na leitura do MPU";
 
             // This fixes the transition problem when the accelerometer angle
