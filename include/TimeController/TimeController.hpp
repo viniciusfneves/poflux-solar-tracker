@@ -6,8 +6,6 @@
 #include <Wire.h>      //Biblioteca para manipulação do protocolo I2C
 #include <time.h>
 
-#include <configurations/configurations.hpp>
-
 // Criação do objeto do tipo DS3231
 RtcDS3231<TwoWire> rtc(Wire);
 
@@ -30,9 +28,9 @@ class TimeController {
     /**
      * @brief Sets the internal clock on the ESP32
      */
-    void _setInternalRTC(const int64_t& epoch) {
+    void _setInternalRTC(const int64_t& unix_time) {
         timeval _date;
-        _date.tv_sec  = epoch;
+        _date.tv_sec  = unix_time;
         _date.tv_usec = 0;
         settimeofday(&_date, NULL);
     }
@@ -49,12 +47,12 @@ class TimeController {
     }
 
     /**
-     * @brief Set the value on the RTC module with the EPOCH time
-     * @param epoch seconds passed since EPOCH - 01/01/1970
+     * @brief Set the value on the RTC module with the UNIX time
+     * @param unix_time UNIX time
      */
-    void setDatetime(const int64_t& epoch) {
-        _setInternalRTC(epoch);
-        _datetime.InitWithEpoch64Time(epoch);
+    void setDatetime(const int64_t& unix_time) {
+        _setInternalRTC(unix_time);
+        _datetime.InitWithUnix64Time(unix_time);
         rtc.SetDateTime(_datetime);
     }
 
@@ -70,15 +68,15 @@ class TimeController {
 
     /**
      * @brief Reads the ESP32 internal RTC
-     * @returns the datetime value in EPOCH format
+     * @returns the datetime value in UNIX format
      */
     int64_t datetime() { return time(NULL); }
 
     /**
      * @brief Reads the external RTC Module
-     * @returns the datetime value in EPOCH format
+     * @returns the datetime value in UNIX format
      */
-    int64_t RTCdatetime() { return _datetime.Epoch64Time(); }
+    int64_t RTCdatetime() { return _datetime.Unix64Time(); }
 
     /**
      * @brief Calculates the theoretical position of greatest incidence of solar
@@ -86,23 +84,20 @@ class TimeController {
      * @returns the sun position in degrees
      */
     int sunPosition() {
-        byte today[] = {
-            _datetime.Second(), _datetime.Minute(),
-            _datetime.Hour(),   _datetime.Day(),
-            _datetime.Month(),  static_cast<byte>(_datetime.Year())};
+        byte today[] = {_datetime.Second(), _datetime.Minute(),
+                        _datetime.Hour(),   _datetime.Day(),
+                        _datetime.Month(),  static_cast<byte>(_datetime.Year())};
 
         _dayCurrentTime = (double)_datetime.Hour() * 3600 +
                           (double)_datetime.Minute() * 60 +
                           (double)_datetime.Second();  // Hora atual em segundos
 
         if (lord.SunRise(today))
-            _daySunRise =
-                (double)today[tl_hour] * 3600 +
-                (double)today[tl_minute] * 60;  // converte para segundos
+            _daySunRise = (double)today[tl_hour] * 3600 +
+                          (double)today[tl_minute] * 60;  // converte para segundos
         if (lord.SunSet(today))
-            _daySunSet =
-                (double)today[tl_hour] * 3600 +
-                (double)today[tl_minute] * 60;  // converte para segundos
+            _daySunSet = (double)today[tl_hour] * 3600 +
+                         (double)today[tl_minute] * 60;  // converte para segundos
 
         return (map(_dayCurrentTime, _daySunRise, _daySunSet, 90.0, -90.0));
     }
