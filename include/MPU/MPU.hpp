@@ -4,9 +4,9 @@
 #include <Wire.h>
 #include <math.h>
 
+#include <TimeController/TimeController.hpp>
 #include <configurations/configurations.hpp>
 #include <debugLED/debugLED.hpp>
-#include <TimeController/TimeController.hpp>
 
 #define RAW_TO_G 16384.
 #define RAW_TO_RAD_PER_SECOND 131 * 0.01745
@@ -24,7 +24,7 @@ struct MPUData {
     double AcX, AcY, AcZ, Tmp, GyXRate, GyYRate, GyZRate;
     double roll, pitch;
     double kalAngleX, kalAngleY;  // Ângulo usando filtro de Kalman
-    int contadorDeZeros;
+    int    contadorDeZeros;
 };
 
 class MPU6050_Solar {
@@ -152,7 +152,8 @@ class MPU6050_Solar {
 
             // Solicita os dados do sensor
             byte responseLenght = Wire.requestFrom(_mpuAddress, 14);
-            if (responseLenght != 14) throw "MPU ERROR: Falha na leitura do MPU";
+            if (responseLenght != 14)
+                throw "MPU ERROR: Número de bytes recebidos é diferente do esperado";
 
             // Armazena o valor dos registradores em um array
             int16_t mpuRawData[7];
@@ -182,17 +183,16 @@ class MPU6050_Solar {
                 atan(-data.AcX / sqrt(data.AcY * data.AcY + data.AcZ * data.AcZ)) *
                 RAD_TO_DEG;
 
-            if (data.roll != 0 ) {
-                data.isTrusted = true;
+            if (data.roll != 0) {
+                data.isTrusted       = true;
                 data.contadorDeZeros = 0;
-               }
-            else if (data.contadorDeZeros <= 5) {
+            } else if (data.contadorDeZeros <= 5) {
                 data.contadorDeZeros++;
                 data.isTrusted = true;
-                }
-            else 
+            } else {
                 data.isTrusted = false;
-                throw "MPU ERROR: Falha na leitura do MPU";
+                throw "MPU ERROR: Sequência de zeros recebida";
+            }
 
             // This fixes the transition problem when the accelerometer angle
             // jumps between -180 and 180 degrees
