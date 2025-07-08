@@ -11,8 +11,8 @@ enum class Mode { Auto, Manual, Presentation, Halt };
 
 struct Configs {
     Mode     mode              = Mode::Auto;
-    double   manualSetpoint    = 0;   // graus
-    uint16_t broadcastInterval = 33;  // ms
+    double   manualSetpoint    = 0;     // graus
+    uint16_t broadcastInterval = 1000;  // ms
 
     void changeMode(Mode _mode) {
         mode = _mode;
